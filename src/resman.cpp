@@ -43,24 +43,11 @@ public:
             return hr;
         }
 
-#ifdef CONFIG_IMAGE_LOADING
-        // In image mode we don't use g_vecOverrides; try to find the property directly in root-mounted filesystem
-        Ztl_bstr_t path = pArchive->absoluteUOL;
-        Ztl_variant_t vProp = get_rm()->GetObjectA(path);
-        IWzPropertyPtr pProperty = vProp.GetUnknown();
-        if (!pProperty) {
-            return hr; // no custom override for this property in image mode
-        }
-#else
         // Custom mode: check overrides list and lookup under Custom/ prefix
         if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), pArchive->absoluteUOL)) {
             return hr;
         }
         IWzPropertyPtr pProperty = get_rm()->GetObjectA(Ztl_bstr_t(L"Custom/") + pArchive->absoluteUOL).GetUnknown();
-#endif
-        if (!pProperty) {
-            return hr;
-        }
 
         IEnumVARIANTPtr pEnum = pProperty->_NewEnum;
         while (true) {
