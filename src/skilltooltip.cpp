@@ -26,7 +26,9 @@ int __stdcall CalcCharLen(const char* sText) {
     if (uLength <= static_cast<size_t>(SKILL_TOOLTIP_LINE_BYTES)) {
         return SKILL_TOOLTIP_LINE_BYTES;
     }
-    size_t uScanLimit = std::min(uLength, static_cast<size_t>(SKILL_TOOLTIP_SCAN_BYTES));
+    size_t uScanLimit = uLength < static_cast<size_t>(SKILL_TOOLTIP_SCAN_BYTES)
+        ? uLength
+        : static_cast<size_t>(SKILL_TOOLTIP_SCAN_BYTES);
     size_t i = 0;
     while (i < uScanLimit) {
         size_t uStep = 1;
