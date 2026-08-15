@@ -109,7 +109,7 @@ void CWvsApp::InitializeResMan_hook() {
     pWritableRoot->Mount(L"/", fs, 0);
 
     // use filesystem as the custom namespace for possible lookups
-    g_pCustomNameSpace = fs.GetUnknown();
+    // g_pCustomNameSpace = fs.GetUnknown();
 
     // In image mode we do not collect overrides and we do not attach NameSpace / PCOM hooks.
 #else
