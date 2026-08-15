@@ -1,0 +1,16 @@
+# zh_CN translations for Kaentake
+# Format: index=translation (UTF-8)
+# Lines starting with '#' are comments and will be ignored by the loader.
+# The loader reads translations/zh_CN.txt relative to the working directory.
+# Example entries (replace/add indices that match StringPool indices used in the client):
+
+1163=凯恩泰克
+2000=设置
+2001=退出
+
+# Notes:
+# - Save this file as UTF-8. A UTF-8 BOM is tolerated and will be removed by the loader.
+# - If the client expects a different encoding (e.g., GBK), we can add conversion in the loader.
+# - To add an empty translation for an index, use `index=` (the loader will set an empty string).
+# - Keep placeholders intact (e.g., %s, %d, {0}) and do not alter their order unless you know it's safe.
+# - After editing this file, run the client so AttachStringPoolMod() can load the translations at startup.
