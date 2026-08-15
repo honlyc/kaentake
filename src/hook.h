@@ -53,6 +53,7 @@ void AttachItemEffectMod();
 void AttachResolutionMod();
 void AttachMobHpTagMod();
 void AttachToolTipMod();
+void AttachSkillToolTipMod();
 void AttachIconIconMod();
 void AttachTempStatMod();
 
@@ -66,6 +67,7 @@ inline void AttachClientHooks() {
     AttachResolutionMod();
     AttachMobHpTagMod();
     AttachToolTipMod();
+    AttachSkillToolTipMod();
     AttachIconIconMod();
     AttachTempStatMod();
 }
