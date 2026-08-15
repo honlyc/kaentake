@@ -15,57 +15,57 @@
 static IWzNameSpacePtr g_pCustomNameSpace;
 static std::vector<Ztl_bstr_t> g_vecOverrides;
 
-class IWzNameSpaceImpl {
-public:
-    typedef HRESULT(__stdcall* raw__OnGetLocalObject_t)(IWzNameSpaceImpl*, int, BSTR, int*, VARIANT*);
-    inline static raw__OnGetLocalObject_t raw__OnGetLocalObject_orig;
+// class IWzNameSpaceImpl {
+// public:
+//     typedef HRESULT(__stdcall* raw__OnGetLocalObject_t)(IWzNameSpaceImpl*, int, BSTR, int*, VARIANT*);
+//     inline static raw__OnGetLocalObject_t raw__OnGetLocalObject_orig;
 
-    HRESULT __stdcall raw__OnGetLocalObject_hook(int nIndex, BSTR sPath, int* pnPathUsed, VARIANT* pvRet) {
-        HRESULT hr = raw__OnGetLocalObject_orig(this, nIndex, sPath, pnPathUsed, pvRet);
-        if (SUCCEEDED(hr)) {
-            return hr;
-        }
-        if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), Ztl_bstr_t(sPath))) {
-            return hr;
-        }
-        return g_pCustomNameSpace->raw__OnGetLocalObject(nIndex, sPath, pnPathUsed, pvRet);
-    }
-};
+//     HRESULT __stdcall raw__OnGetLocalObject_hook(int nIndex, BSTR sPath, int* pnPathUsed, VARIANT* pvRet) {
+//         HRESULT hr = raw__OnGetLocalObject_orig(this, nIndex, sPath, pnPathUsed, pvRet);
+//         if (SUCCEEDED(hr)) {
+//             return hr;
+//         }
+//         if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), Ztl_bstr_t(sPath))) {
+//             return hr;
+//         }
+//         return g_pCustomNameSpace->raw__OnGetLocalObject(nIndex, sPath, pnPathUsed, pvRet);
+//     }
+// };
 
-class CWzProperty : public IWzProperty {
-public:
-    typedef HRESULT(__stdcall* raw_Serialize_t)(CWzProperty*, IWzArchive*);
-    inline static raw_Serialize_t raw_Serialize_orig;
+// class CWzProperty : public IWzProperty {
+// public:
+//     typedef HRESULT(__stdcall* raw_Serialize_t)(CWzProperty*, IWzArchive*);
+//     inline static raw_Serialize_t raw_Serialize_orig;
 
-    HRESULT __stdcall raw_Serialize_hook(IWzArchive* pArchive) {
-        HRESULT hr = raw_Serialize_orig(this, pArchive);
-        if (FAILED(hr)) {
-            return hr;
-        }
+//     HRESULT __stdcall raw_Serialize_hook(IWzArchive* pArchive) {
+//         HRESULT hr = raw_Serialize_orig(this, pArchive);
+//         if (FAILED(hr)) {
+//             return hr;
+//         }
 
-        // Custom mode: check overrides list and lookup under Custom/ prefix
-        if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), pArchive->absoluteUOL)) {
-            return hr;
-        }
-        IWzPropertyPtr pProperty = get_rm()->GetObjectA(Ztl_bstr_t(L"Custom/") + pArchive->absoluteUOL).GetUnknown();
+//         // Custom mode: check overrides list and lookup under Custom/ prefix
+//         if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), pArchive->absoluteUOL)) {
+//             return hr;
+//         }
+//         IWzPropertyPtr pProperty = get_rm()->GetObjectA(Ztl_bstr_t(L"Custom/") + pArchive->absoluteUOL).GetUnknown();
 
-        IEnumVARIANTPtr pEnum = pProperty->_NewEnum;
-        while (true) {
-            Ztl_variant_t vNext;
-            ULONG uCeltFetched;
-            if (FAILED(pEnum->Next(1, &vNext, &uCeltFetched)) || uCeltFetched == 0) {
-                break;
-            }
-            Ztl_bstr_t sNext = V_BSTR(&vNext);
-            IUnknownPtr pUnk = pProperty->item[sNext].GetUnknown();
-            IWzPropertyPtr pSub;
-            if (!pUnk || FAILED(pUnk->QueryInterface(&pSub))) {
-                this->Add(sNext, pProperty->item[sNext], false);
-            }
-        }
-        return S_OK;
-    }
-};
+//         IEnumVARIANTPtr pEnum = pProperty->_NewEnum;
+//         while (true) {
+//             Ztl_variant_t vNext;
+//             ULONG uCeltFetched;
+//             if (FAILED(pEnum->Next(1, &vNext, &uCeltFetched)) || uCeltFetched == 0) {
+//                 break;
+//             }
+//             Ztl_bstr_t sNext = V_BSTR(&vNext);
+//             IUnknownPtr pUnk = pProperty->item[sNext].GetUnknown();
+//             IWzPropertyPtr pSub;
+//             if (!pUnk || FAILED(pUnk->QueryInterface(&pSub))) {
+//                 this->Add(sNext, pProperty->item[sNext], false);
+//             }
+//         }
+//         return S_OK;
+//     }
+// };
 
 
 void CWvsApp::InitializeResMan_hook() {
@@ -94,9 +94,6 @@ void CWvsApp::InitializeResMan_hook() {
 
     // mount filesystem directly into the root namespace so data files are discoverable
     pWritableRoot->Mount(L"/", fs, 0);
-
-    // use filesystem as the custom namespace for possible lookups
-    // g_pCustomNameSpace = fs.GetUnknown();
 
     // In image mode we do not collect overrides and we do not attach NameSpace / PCOM hooks.
 #else
