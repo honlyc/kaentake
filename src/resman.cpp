@@ -8,6 +8,9 @@
 #include <vector>
 #include <tuple>
 
+// Enable image-based loading branch by default in this file.
+// To use original Custom.wz behavior, comment out the following line.
+#define CONFIG_IMAGE_LOADING
 
 static IWzNameSpacePtr g_pCustomNameSpace;
 static std::vector<Ztl_bstr_t> g_vecOverrides;
@@ -39,10 +42,26 @@ public:
         if (FAILED(hr)) {
             return hr;
         }
+
+#ifdef CONFIG_IMAGE_LOADING
+        // In image mode we don't use g_vecOverrides; try to find the property directly in root-mounted filesystem
+        Ztl_bstr_t path = pArchive->absoluteUOL;
+        Ztl_variant_t vProp = get_rm()->GetObjectA(path);
+        IWzPropertyPtr pProperty = vProp.GetUnknown();
+        if (!pProperty) {
+            return hr; // no custom override for this property in image mode
+        }
+#else
+        // Custom mode: check overrides list and lookup under Custom/ prefix
         if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), pArchive->absoluteUOL)) {
             return hr;
         }
-        IWzPropertyPtr pProperty = get_rm()->GetObjectA(L"Custom/" + pArchive->absoluteUOL).GetUnknown();
+        IWzPropertyPtr pProperty = get_rm()->GetObjectA(Ztl_bstr_t(L"Custom/") + pArchive->absoluteUOL).GetUnknown();
+#endif
+        if (!pProperty) {
+            return hr;
+        }
+
         IEnumVARIANTPtr pEnum = pProperty->_NewEnum;
         while (true) {
             Ztl_variant_t vNext;
@@ -66,19 +85,14 @@ void CWvsApp::InitializeResMan_hook() {
     DEBUG_MESSAGE("CWvsApp::InitializeResMan");
     CWvsApp::InitializeResMan(this);
 
-    // add custom namespace to root
+    // prepare writable root pointer (used by both branches)
     IWzWritableNameSpacePtr pWritableRoot;
     if (FAILED(get_root()->QueryInterface(&pWritableRoot))) {
         ErrorMessage("Failed to cast root namespace");
         return;
     }
-    IWzNameSpacePtr pNameSpace;
-    PcCreateObject<IWzNameSpacePtr>(L"NameSpace", pNameSpace, nullptr);
-    Ztl_variant_t vResult;
-    pWritableRoot->AddObject(L"Custom", static_cast<IUnknown*>(pNameSpace), &vResult);
-    g_pCustomNameSpace = vResult.GetUnknown();
 
-    // load Custom.wz from file system
+    // create filesystem helper
     IWzFileSystemPtr fs;
     PcCreateObject<IWzFileSystemPtr>(L"NameSpace#FileSystem", fs, nullptr);
     char sStartPath[MAX_PATH];
@@ -87,12 +101,25 @@ void CWvsApp::InitializeResMan_hook() {
     Dir_upDir(sStartPath);
 
 #ifdef CONFIG_IMAGE_LOADING
-    // Image-based loading: use <exe dir>/Data and mount filesystem directly
+    // IMAGE branch: mount <exe dir>/Data into root. No Custom namespace object is added.
     strcat_s(sStartPath, MAX_PATH, "/Data");
     fs->Init(Ztl_bstr_t(sStartPath));
-    // Mount filesystem into Custom namespace so Custom/ entries come from Data/
-    g_pCustomNameSpace->Mount(L"/", fs, 1);
+
+    // mount filesystem directly into the root namespace so data files are discoverable
+    pWritableRoot->Mount(L"/", fs, 0);
+
+    // use filesystem as the custom namespace for possible lookups
+    g_pCustomNameSpace = fs.GetUnknown();
+
+    // In image mode we do not collect overrides and we do not attach NameSpace / PCOM hooks.
 #else
+    // CUSTOM branch: create a dedicated Custom namespace object and mount Custom.wz into it
+    IWzNameSpacePtr pNameSpace;
+    PcCreateObject<IWzNameSpacePtr>(L"NameSpace", pNameSpace, nullptr);
+    Ztl_variant_t vResult;
+    pWritableRoot->AddObject(L"Custom", static_cast<IUnknown*>(pNameSpace), &vResult);
+    g_pCustomNameSpace = vResult.GetUnknown();
+
     fs->Init(sStartPath);
 
     IWzPackagePtr pPackage;
@@ -100,9 +127,8 @@ void CWvsApp::InitializeResMan_hook() {
     IWzSeekableArchivePtr pArchive = fs->item[L"Custom.wz"].GetUnknown();
     pPackage->Init(L"83", L"Custom", pArchive);
     g_pCustomNameSpace->Mount(L"/", pPackage, 1);
-#endif
 
-    // iterate custom namespace
+    // iterate custom namespace and collect overrides
     std::vector<std::tuple<Ztl_bstr_t, IEnumVARIANTPtr>> stack;
     stack.emplace_back(L"", g_pCustomNameSpace->_NewEnum);
     while (!stack.empty()) {
@@ -116,7 +142,7 @@ void CWvsApp::InitializeResMan_hook() {
                 break;
             }
             Ztl_bstr_t sUOL = (sPath.length() > 0 ? sPath + L"/" : L"") + V_BSTR(&vNext);
-            Ztl_variant_t vObj = get_rm()->GetObjectA(L"Custom/" + sUOL);
+            Ztl_variant_t vObj = get_rm()->GetObjectA(Ztl_bstr_t(L"Custom/") + sUOL);
             IUnknownPtr pUnk = vObj.GetUnknown();
             if (pUnk) {
                 IWzNameSpacePtr pSub;
@@ -141,6 +167,7 @@ void CWvsApp::InitializeResMan_hook() {
     // PCOM.dll - patch CWzProperty objects during serialization
     CWzProperty::raw_Serialize_orig = static_cast<CWzProperty::raw_Serialize_t>(GetAddressByPattern("PCOM.DLL", "B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 68"));
     ATTACH_HOOK(CWzProperty::raw_Serialize_orig, CWzProperty::raw_Serialize_hook);
+#endif
 }
 
 void CWvsApp::CleanUp_hook() {
