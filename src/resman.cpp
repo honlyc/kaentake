@@ -85,6 +85,14 @@ void CWvsApp::InitializeResMan_hook() {
     GetModuleFileNameA(nullptr, sStartPath, MAX_PATH);
     Dir_BackSlashToSlash(sStartPath);
     Dir_upDir(sStartPath);
+
+#ifdef CONFIG_IMAGE_LOADING
+    // Image-based loading: use <exe dir>/Data and mount filesystem directly
+    strcat_s(sStartPath, MAX_PATH, "/Data");
+    fs->Init(Ztl_bstr_t(sStartPath));
+    // Mount filesystem into Custom namespace so Custom/ entries come from Data/
+    g_pCustomNameSpace->Mount(L"/", fs, 1);
+#else
     fs->Init(sStartPath);
 
     IWzPackagePtr pPackage;
@@ -92,6 +100,7 @@ void CWvsApp::InitializeResMan_hook() {
     IWzSeekableArchivePtr pArchive = fs->item[L"Custom.wz"].GetUnknown();
     pPackage->Init(L"83", L"Custom", pArchive);
     g_pCustomNameSpace->Mount(L"/", pPackage, 1);
+#endif
 
     // iterate custom namespace
     std::vector<std::tuple<Ztl_bstr_t, IEnumVARIANTPtr>> stack;
