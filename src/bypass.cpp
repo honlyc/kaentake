@@ -155,11 +155,14 @@ void CWvsApp::SetUp_hook() {
     // CWvsApp::InitializePCOM(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F6D77)(this);
     // CWvsApp::CreateMainWindow(this);
+    LOG_DEBUG("SetUp: CreateMainWindow");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F6D97)(this);
+    LOG_DEBUG("SetUp: CreateMainWindow done");
     // TSingleton<CClientSocket::CreateInstance();
     reinterpret_cast<void(__cdecl*)()>(0x009F9E53)();
     // CWvsApp::ConnectLogin(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F6F27)(this);
+    LOG_DEBUG("SetUp: ConnectLogin done");
     // TSingleton<CFuncKeyMappedMan>::CreateInstance();
     reinterpret_cast<void(__cdecl*)()>(0x009F9E98)();
     // TSingleton<CQuickslotKeyMappedMan>::CreateInstance();
@@ -181,10 +184,13 @@ void CWvsApp::SetUp_hook() {
     reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
     // CWvsApp::InitializeSound(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F82BC)(this);
+    LOG_DEBUG("SetUp: InitializeSound done");
     // CWvsApp::InitializeGameData(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F8B61)(this);
+    LOG_DEBUG("SetUp: InitializeGameData done");
     // CWvsApp::CreateWndManager(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7034)(this);
+    LOG_DEBUG("SetUp: CreateWndManager done");
     // CConfig::ApplySysOpt(TSingleton<CConfig>::ms_pInstance, nullptr, nullptr);
     reinterpret_cast<void(__thiscall*)(CConfig*, void*, void*)>(0x0049EA33)(CConfig::GetInstance(), nullptr, nullptr);
 
@@ -214,13 +220,16 @@ void CWvsApp::SetUp_hook() {
     reinterpret_cast<void*(__cdecl*)()>(0x009FA078)();
 
     // (CLogo*) operator new(0x38); -> (CLogin*) operator new(0x28C);
+    LOG_DEBUG("SetUp: create CLogin stage");
     CStage* pStage = static_cast<CStage*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x28C));
     if (pStage) {
         // CLogo::CLogo(pStage); -> CLogin::Clogin(pStage);
         reinterpret_cast<void(__thiscall*)(void*)>(0x005F3C59)(pStage);
     }
+    LOG_DEBUG("SetUp: set_stage CLogin");
     // set_stage(pStage, nullptr);
     reinterpret_cast<void(__cdecl*)(CStage*, void*)>(0x00777347)(pStage, nullptr);
+    LOG_DEBUG("CWvsApp::SetUp done");
 }
 
 void CWvsApp::CallUpdate_hook(int tCurTime) {
