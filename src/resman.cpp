@@ -65,7 +65,38 @@ public:
 void CWvsApp::InitializeResMan_hook() {
     LOG_INFO("CWvsApp::InitializeResMan_hook - Start");
     LOG_INFO("CWvsApp::InitializeResMan_hook - Calling original InitializeResMan");
-    CWvsApp::InitializeResMan(this);
+    try {
+        IWzResManPtr& rm = get_rm();
+        PcCreateObject<IWzResManPtr>(L"ResMan", rm, nullptr);
+        rm->SetResManParam(static_cast<RESMAN_PARAM>(RESMAN_PARAM::RC_AUTO_REPARSE | RESMAN_PARAM::RC_AUTO_SERIALIZE), -1, -1);
+
+        IWzNameSpacePtr& root = get_root();
+        PcCreateObject<IWzNameSpacePtr>(L"NameSpace", root, nullptr);
+        PcSetRootNameSpace(root);
+
+        IWzFileSystemPtr fs;
+        PcCreateObject<IWzFileSystemPtr>(L"NameSpace#FileSystem", fs, nullptr);
+        char sStartPath[MAX_PATH];
+        GetModuleFileNameA(nullptr, sStartPath, MAX_PATH);
+        Dir_BackSlashToSlash(sStartPath);
+        Dir_upDir(sStartPath);
+        strcat_s(sStartPath, MAX_PATH, "/Data");
+        fs->Init(Ztl_bstr_t(sStartPath));
+        root->Mount(L"/", fs, 0);
+    } catch (const _com_error& e) {
+        HRESULT hr = e.Error();
+        ZException exception(hr);
+        if (hr == 0x80070005) {
+            hr = 0x22000005; // EC_INVALID_GAME_DATA_VERSION
+        } else if (hr == 0x80070057) {
+            hr = 0x22000003; // EC_NOT_ENOUGH_MEMORY
+        } else {
+            hr = 0x22000004; // EC_NO_DATA_PACAKGE
+        }
+        // CTerminateException::CTerminateException(&exception, hr);
+        reinterpret_cast<void(__thiscall*)(void*, HRESULT)>(0x00401D50)(&exception, hr);
+        throw exception;
+    }
     LOG_INFO("CWvsApp::InitializeResMan_hook - Skipping Custom.wz loading for img client compatibility");
     LOG_INFO("CWvsApp::InitializeResMan_hook - Complete");
 }
