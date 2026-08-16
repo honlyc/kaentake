@@ -143,3 +143,16 @@ template <typename T>
 void PatchRetZero(T pAddress) {
     PatchStr(pAddress, "\x33\xC0\xC3");
 }
+
+template <typename T>
+void FillBytes(T pAddress, unsigned char uValue, size_t uSize) {
+    if (uSize == 0) {
+        return;
+    }
+    void* pValue = malloc(uSize);
+    if (pValue != NULL) {
+        memset(pValue, uValue, uSize);
+        PatchMemory(TO_PVOID(pAddress), pValue, uSize);
+        free(pValue);
+    }
+}

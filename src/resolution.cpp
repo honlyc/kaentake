@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "hook.h"
 #include "constants.h"
+#include "ClientConfig.h"
 #include "wvs/config.h"
 #include "wvs/wnd.h"
 #include "wvs/wndman.h"
@@ -776,4 +777,6 @@ void AttachResolutionMod() {
     CWzGr2D__AdjustCenterY_jmp = reinterpret_cast<uintptr_t>(GetAddressByPattern("GR2D_DX8.DLL", "8D 96 C4 00 00 00"));
     CWzGr2D__AdjustCenterY_ret = CWzGr2D__AdjustCenterY_jmp + 6;
     PatchJmp(CWzGr2D__AdjustCenterY_jmp, &CWzGr2D__AdjustCenterY_hook);
+
+    ClientConfig::Init();
 }

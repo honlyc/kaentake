@@ -8,6 +8,7 @@ add_library(injector SHARED
     avatar.cpp
     itemeff.cpp
     resolution.cpp
+    ClientConfig.cpp
     mobhptag.cpp
     tooltip.cpp
     skilltooltip.cpp
