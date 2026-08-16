@@ -9,6 +9,8 @@
 #include "wvs/tempstat.h"
 #include "wvs/statusbar.h"
 #include "wvs/ctrlwnd.h"
+#include "FixIme.h"
+#include "FixBuddy.h"
 #include "wvs/stage.h"
 #include "wvs/field.h"
 #include "wvs/rtti.h"
@@ -681,6 +683,9 @@ void set_screen_resolution(int nResolution, bool bSave) {
 
 void AttachResolutionMod() {
     ClientConfig::Init();
+    FixIme::HookNew();
+    FixBuddy::Hook();
+    
     ATTACH_HOOK(set_stage, set_stage_hook);
     ATTACH_HOOK(CConfig::GetUIWndPos, CConfig::GetUIWndPos_hook);
     ATTACH_HOOK(CConfig::LoadCharacter, CConfig::LoadCharacter_hook);

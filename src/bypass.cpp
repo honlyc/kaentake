@@ -173,17 +173,7 @@ void CWvsApp::SetUp_hook() {
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7159)(this);
 
     // CWvsApp::InitializeGr2D(this);
-    LOG_DEBUG("SetUp: InitializeGr2D begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7A3B)(this);
-    LOG_DEBUG("SetUp: InitializeGr2D done");
-    // 诊断：读取 CWzGr2D 的全屏标志与分辨率 (m_screenMode at +0x20, nWidth/nHeight/bFullScreen at +0x20/+0x24/+0x78)
-    if (get_gr()) {
-        auto pGr2D = reinterpret_cast<unsigned char*>(get_gr().GetInterfacePtr());
-        int nW = *reinterpret_cast<int*>(pGr2D + 0x20);
-        int nH = *reinterpret_cast<int*>(pGr2D + 0x24);
-        int nFull = *reinterpret_cast<int*>(pGr2D + 0x78);
-        LOG_DEBUG("SetUp: Gr2D screenMode width=%d height=%d fullScreen=%d", nW, nH, nFull);
-    }
     // TSingleton<CInputSystem>::CreateInstance();
     auto pInputSystem = static_cast<CInputSystem*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x9D0));
     if (pInputSystem) {
