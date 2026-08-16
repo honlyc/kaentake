@@ -680,6 +680,7 @@ void set_screen_resolution(int nResolution, bool bSave) {
 
 
 void AttachResolutionMod() {
+    ClientConfig::Init();
     ATTACH_HOOK(set_stage, set_stage_hook);
     ATTACH_HOOK(CConfig::GetUIWndPos, CConfig::GetUIWndPos_hook);
     ATTACH_HOOK(CConfig::LoadCharacter, CConfig::LoadCharacter_hook);
@@ -778,5 +779,4 @@ void AttachResolutionMod() {
     CWzGr2D__AdjustCenterY_ret = CWzGr2D__AdjustCenterY_jmp + 6;
     PatchJmp(CWzGr2D__AdjustCenterY_jmp, &CWzGr2D__AdjustCenterY_hook);
 
-    ClientConfig::Init();
 }
