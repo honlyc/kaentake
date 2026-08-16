@@ -11,7 +11,6 @@ add_library(injector SHARED
     ClientConfig.cpp
     mobhptag.cpp
     tooltip.cpp
-    skilltooltip.cpp
     itemicon.cpp
     tempstat.cpp
     stringpool.cpp

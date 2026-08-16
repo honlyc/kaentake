@@ -53,7 +53,6 @@ void AttachItemEffectMod();
 void AttachResolutionMod();
 void AttachMobHpTagMod();
 void AttachToolTipMod();
-void AttachSkillToolTipMod();
 void AttachIconIconMod();
 void AttachTempStatMod();
 
@@ -67,7 +66,6 @@ inline void AttachClientHooks() {
     AttachResolutionMod();
     AttachMobHpTagMod();
     AttachToolTipMod();
-    AttachSkillToolTipMod();
     AttachIconIconMod();
     AttachTempStatMod();
 }
@@ -142,6 +140,16 @@ void PatchCall(T pAddress, U pDestination, size_t uSize = 5) {
 template <typename T>
 void PatchRetZero(T pAddress) {
     PatchStr(pAddress, "\x33\xC0\xC3");
+}
+
+template <typename T, typename U>
+void CodeCave(T pAddress, U pDestination, size_t uSize) {
+    if (uSize < 5) {
+        ErrorMessage("CodeCave: uSize must be at least 5 bytes");
+        return;
+    }
+    PatchNop(pAddress, pAddress + uSize);
+    PatchJmp(pAddress, pDestination);
 }
 
 template <typename T>
