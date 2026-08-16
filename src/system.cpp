@@ -28,7 +28,7 @@ typedef decltype(&CreateMutexA) CreateMutexA_t;
 static CreateMutexA_t CreateMutexA_orig = reinterpret_cast<CreateMutexA_t>(GetAddress("KERNEL32", "CreateMutexA"));
 
 HANDLE WINAPI CreateMutexA_hook(LPSECURITY_ATTRIBUTES lpMutexAttributes, BOOL bInitialOwner, LPCSTR lpName) {
-    DEBUG_MESSAGE("CreateMutexA : %s", lpName);
+    LOG_DEBUG("CreateMutexA : %s", lpName);
     if (lpName && !strcmp(lpName, "WvsClientMtx")) {
         char sMutex[1024];
         sprintf_s(sMutex, 1024, "%s-%d", lpName, GetCurrentProcessId());

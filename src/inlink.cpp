@@ -43,7 +43,7 @@ void HandleLinkProperty(IWzCanvasPtr pCanvas) {
         IWzCanvasPtr pSource;
         IUnknownPtr pUnknown = get_rm()->GetObjectA(V_BSTR(&vLink)).GetUnknown();
         if (!pUnknown || FAILED(pUnknown->QueryInterface(&pSource))) {
-            DEBUG_MESSAGE("Could not resolve linked canvas %ls=\"%ls\"", asLinkProperty[i], V_BSTR(&vLink));
+            LOG_DEBUG("Could not resolve linked canvas %ls=\"%ls\"", asLinkProperty[i], V_BSTR(&vLink));
             continue;
         }
 

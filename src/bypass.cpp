@@ -67,7 +67,7 @@ public:
 };
 
 void CClientSocket::Connect_hook(const CONNECTCONTEXT& ctx) {
-    DEBUG_MESSAGE("CClientSocket::Connect");
+    LOG_DEBUG("CClientSocket::Connect");
     m_ctxConnect.lAddr.RemoveAll();
     m_ctxConnect.lAddr.AddTail(ctx.lAddr);
     m_ctxConnect.posList = ctx.posList;
@@ -105,7 +105,7 @@ class CActionMan : public TSingleton<CActionMan, 0x00BE78D4> {
 };
 
 void CWvsApp::Constructor_hook() {
-    DEBUG_MESSAGE("CWvsApp::CWvsApp");
+    LOG_DEBUG("CWvsApp::CWvsApp");
     ms_pInstance = this;
     m_hWnd = nullptr;
     m_bPCOMInitialized = 0;
@@ -144,7 +144,7 @@ void CWvsApp::Constructor_hook() {
 }
 
 void CWvsApp::SetUp_hook() {
-    DEBUG_MESSAGE("CWvsApp::SetUp");
+    LOG_DEBUG("CWvsApp::SetUp");
     // CWvsApp::InitializeAuth(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7097)(this);
     srand(timeGetTime());

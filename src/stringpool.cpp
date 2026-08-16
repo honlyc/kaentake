@@ -81,7 +81,7 @@ static inline void trim(std::string &s) { ltrim(s); rtrim(s); }
 static void LoadTranslationsFromFile(const char* path) {
     std::ifstream ifs(path, std::ios::binary);
     if (!ifs) {
-        DEBUG_MESSAGE("LoadTranslationsFromFile: failed to open %s", path);
+        LOG_DEBUG("LoadTranslationsFromFile: failed to open %s", path);
         return;
     }
     std::string line;
@@ -107,11 +107,11 @@ static void LoadTranslationsFromFile(const char* path) {
             int idx = std::stoi(key);
             ReplaceStringRuntime(idx, val);
         } catch (...) {
-            DEBUG_MESSAGE("LoadTranslationsFromFile: invalid key on line %u: %s", lineNo, key.c_str());
+            LOG_DEBUG("LoadTranslationsFromFile: invalid key on line %u: %s", lineNo, key.c_str());
             continue;
         }
     }
-    DEBUG_MESSAGE("LoadTranslationsFromFile: finished loading %s", path);
+    LOG_DEBUG("LoadTranslationsFromFile: finished loading %s", path);
 }
 
 

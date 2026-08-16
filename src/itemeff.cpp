@@ -36,7 +36,7 @@ int __fastcall CItemInfo__IterateItemInfo_hook(CItemInfo* pThis, void* _EDX) {
         IWzPropertyPtr pEffect;
         IUnknownPtr pUnknown = pProp->item[L"effect"].GetUnknown();
         if (SUCCEEDED(pUnknown.QueryInterface(__uuidof(IWzPropertyPtr), &pEffect))) {
-            DEBUG_MESSAGE("Loaded Effect/ItemEff.img/%d", nItemID);
+            LOG_DEBUG("Loaded Effect/ItemEff.img/%d", nItemID);
             g_mPropItemEffect[nItemID] = pEffect;
         }
     }

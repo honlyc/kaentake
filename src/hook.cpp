@@ -67,21 +67,21 @@ void* FindPattern(unsigned char* pModuleBase, size_t uModuleSize, unsigned char*
 bool AttachHook(void** ppTarget, void* pDetour) {
     LONG result;
     if (result = DetourTransactionBegin(); result != NO_ERROR) {
-        DEBUG_MESSAGE("DetourTransactionBegin failed with : %d", result);
+        LOG_DEBUG("DetourTransactionBegin failed with : %d", result);
         return false;
     }
     if (result = DetourUpdateThread(GetCurrentThread()); result != NO_ERROR) {
-        DEBUG_MESSAGE("DetourUpdateThread failed with : %d", result);
+        LOG_DEBUG("DetourUpdateThread failed with : %d", result);
         DetourTransactionAbort();
         return false;
     }
     if (result = DetourAttach(ppTarget, pDetour); result != NO_ERROR) {
-        DEBUG_MESSAGE("DetourAttach failed with : %d", result);
+        LOG_DEBUG("DetourAttach failed with : %d", result);
         DetourTransactionAbort();
         return false;
     }
     if (result = DetourTransactionCommit(); result != NO_ERROR) {
-        DEBUG_MESSAGE("DetourTransactionCommit failed with : %d", result);
+        LOG_DEBUG("DetourTransactionCommit failed with : %d", result);
         DetourTransactionAbort();
         return false;
     }
