@@ -162,8 +162,17 @@ void ClientConfig::ApplyPatches() {
     if (g_EnableWindowLogos) {
     if (WindowedMode) {
         LOG_DEBUG("ApplyPatches: windowed mode");
+        // 先读出原始字节,确认补丁前的指令内容
+        unsigned char* pAddr = reinterpret_cast<unsigned char*>(0x009F7A9B);
+        DWORD flOld;
+        VirtualProtect(pAddr, 8, PAGE_EXECUTE_READWRITE, &flOld);
+        LOG_DEBUG("windowed patch before: %02X %02X %02X %02X %02X %02X %02X %02X",
+            pAddr[0], pAddr[1], pAddr[2], pAddr[3], pAddr[4], pAddr[5], pAddr[6], pAddr[7]);
         unsigned char forced_window[] = { 0xb8, 0x00, 0x00, 0x00, 0x00 };
         PatchMemory((void*)0x009F7A9B, forced_window, sizeof(forced_window));
+        LOG_DEBUG("windowed patch after:  %02X %02X %02X %02X %02X",
+            pAddr[0], pAddr[1], pAddr[2], pAddr[3], pAddr[4]);
+        VirtualProtect(pAddr, 8, flOld, &flOld);
     }
 
     if (RemoveLogos) {
