@@ -2,6 +2,7 @@
 #include "ClientConfig.h"
 #include "hook.h"
 #include "constants.h"
+#include "debug.h"
 
 int ClientConfig::MsgAmount = 26;
 bool ClientConfig::CustomLoginFrame = true;
@@ -32,6 +33,7 @@ void ClientConfig::Init() {
 }
 
 void ClientConfig::ApplyPatches() {
+    LOG_DEBUG("ApplyPatches: stage 1 (manifest/admin)");
     FillBytes(0x00C08459, 0x20, 0x00C0846E - 0x00C08459);
     Patch1(0x00C08459, 0x22);
     PatchStr(0x00C08459 + 1, "asInvoker");
@@ -40,6 +42,7 @@ void ClientConfig::ApplyPatches() {
     Patch1(0x0049CFE8 + 1, 0x01);
     Patch1(0x0049D398 + 1, 0x01);
 
+    LOG_DEBUG("ApplyPatches: stage 2 (server IP)");
     FillBytes(0x00AFE084, 0x00, 0x006FE0B2 - 0x006FE084);
     const char* serverIP = ServerIP_Address.c_str();
     PatchStr(0x00AFE084, serverIP);
@@ -48,9 +51,11 @@ void ClientConfig::ApplyPatches() {
     Patch4(0x007519C1 + 1, serverIP_Port);
 
     if (useTubi) {
+        LOG_DEBUG("ApplyPatches: tubi");
         FillBytes(0x00485C32, 0x90, 2);
     }
 
+    LOG_DEBUG("ApplyPatches: stage 3 (caps)");
     Patch4(0x0077E055 + 1, 2147483646);
     Patch4(0x0077E12F + 1, 2147483646);
     Patch4(0x008C3304 + 1, setDamageCap);
@@ -82,6 +87,7 @@ void ClientConfig::ApplyPatches() {
     unsigned char doubleupper[] = { 0x00, 0x01 };
     PatchMemory((void*)((uintptr_t)0x00953688 + 1), doubleupper, sizeof(doubleupper));
 
+    LOG_DEBUG("ApplyPatches: stage 4 (skill tweaks)");
     PatchNop(0x009A4482, 0x009A4484);
 
     PatchNop(0x008E4252, 0x008E4254);
@@ -94,16 +100,20 @@ void ClientConfig::ApplyPatches() {
     Patch1(0x0068E709 + 1, 0x86);
 
     if (WindowedMode) {
+        LOG_DEBUG("ApplyPatches: windowed mode");
         unsigned char forced_window[] = { 0xb8, 0x00, 0x00, 0x00, 0x00 };
         PatchMemory((void*)0x009F7A9B, forced_window, sizeof(forced_window));
     }
 
     if (RemoveLogos) {
+        LOG_DEBUG("ApplyPatches: remove logos");
         FillBytes(0x0062EE54, 0x90, 21);
     }
 
+    LOG_DEBUG("ApplyPatches: stage 5 (climb speed)");
     Patch4(0x009CC6F9 + 2, 0x00C1CF80);
     unsigned char climbSpeedBytes[8];
     *(double*)climbSpeedBytes = climbSpeed * 3.0f;
     PatchMemory((void*)0x00C1CF80, climbSpeedBytes, 8);
+    LOG_DEBUG("ApplyPatches: done");
 }

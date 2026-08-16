@@ -86,6 +86,7 @@ void CClientSocket::Connect_hook(const CONNECTCONTEXT& ctx) {
         // CClientSocket::OnConnect(this, 0);
         reinterpret_cast<void(__thiscall*)(CClientSocket*, int)>(0x00494ED1)(this, 0);
     }
+    LOG_DEBUG("CClientSocket::Connect done");
 }
 
 
