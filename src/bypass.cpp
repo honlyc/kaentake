@@ -169,20 +169,30 @@ void CWvsApp::SetUp_hook() {
     reinterpret_cast<void(__cdecl*)()>(0x009FA0CB)();
     // TSingleton<CMacroSysMan>::CreateInstance();
     reinterpret_cast<void(__cdecl*)()>(0x009F9EEE)();
+    LOG_DEBUG("SetUp: key/macro man created");
     // CWvsApp::InitializeResMan(this);
+    LOG_DEBUG("SetUp: InitializeResMan begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7159)(this);
+    LOG_DEBUG("SetUp: InitializeResMan done");
 
     // CWvsApp::InitializeGr2D(this);
+    LOG_DEBUG("SetUp: InitializeGr2D begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7A3B)(this);
+    LOG_DEBUG("SetUp: InitializeGr2D done");
     // TSingleton<CInputSystem>::CreateInstance();
     auto pInputSystem = static_cast<CInputSystem*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x9D0));
+    LOG_DEBUG("SetUp: CInputSystem alloc -> %p", static_cast<void*>(pInputSystem));
     if (pInputSystem) {
         // CInputSystem::CInputSystem(pInputSystem);
         reinterpret_cast<void(__thiscall*)(CInputSystem*)>(0x009F821F)(pInputSystem);
     }
+    LOG_DEBUG("SetUp: CInputSystem ctor done");
     // CInputSystem::Init(CInputSystem::GetInstance(), m_hWnd, m_ahInput);
+    LOG_DEBUG("SetUp: CInputSystem::Init begin (hWnd=%p)", static_cast<void*>(m_hWnd));
     reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
+    LOG_DEBUG("SetUp: CInputSystem::Init done");
     // CWvsApp::InitializeSound(this);
+    LOG_DEBUG("SetUp: InitializeSound begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F82BC)(this);
     LOG_DEBUG("SetUp: InitializeSound done");
     // CWvsApp::InitializeGameData(this);
