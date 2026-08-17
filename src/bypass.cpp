@@ -189,7 +189,7 @@ void CWvsApp::SetUp_hook() {
     LOG_DEBUG("SetUp: CInputSystem ctor done");
     // CInputSystem::Init(CInputSystem::GetInstance(), m_hWnd, m_ahInput);
     LOG_DEBUG("SetUp: CInputSystem::Init begin (hWnd=%p)", static_cast<void*>(m_hWnd));
-    reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
+    // reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
     LOG_DEBUG("SetUp: CInputSystem::Init done");
     // CWvsApp::InitializeSound(this);
     LOG_DEBUG("SetUp: InitializeSound begin");
