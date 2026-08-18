@@ -120,5 +120,5 @@ void AttachStringPoolMod() {
     REPLACE_STRING(1163, "Kaentake");
 
     // Try load translations from translations/zh_CN.txt relative to working directory
-    LoadTranslationsFromFile("translations/zh_CN.txt");
+    // LoadTranslationsFromFile("translations/zh_CN.txt");
 }
