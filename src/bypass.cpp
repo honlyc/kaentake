@@ -397,7 +397,7 @@ int CWndMan::TranslateMessage_hook(UINT& msg, WPARAM& wParam, LPARAM& lParam, LR
 void AttachClientBypass() {
     ATTACH_HOOK(CClientSocket::Connect, CClientSocket::Connect_hook);
     ATTACH_HOOK(CWvsApp::Constructor, CWvsApp::Constructor_hook);
-    // ATTACH_HOOK(CWvsApp::SetUp, CWvsApp::SetUp_hook);
+    ATTACH_HOOK(CWvsApp::SetUp, CWvsApp::SetUp_hook);
     ATTACH_HOOK(CWvsApp::Run, CWvsApp::Run_hook);
     ATTACH_HOOK(CLogin::SendCheckPasswordPacket, CLogin::SendCheckPasswordPacket_hook);
     ATTACH_HOOK(CWndMan::TranslateMessage, CWndMan::TranslateMessage_hook);
