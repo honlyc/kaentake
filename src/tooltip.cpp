@@ -216,16 +216,16 @@ __declspec(naked) void skillToolTipNew() {
 void AttachToolTipMod() {
     ATTACH_HOOK(CUIToolTip::SetToolTip_Equip_Basic, CUIToolTip::SetToolTip_Equip_Basic_hook);
     // 装备有效期限日期格式修复
-    CodeCave(0x008EBF57, fixDateFormat, 14);  // StringPool 5273
-    CodeCave(0x008EBFA1, fixDateFormat2, 14); // StringPool 655
-    CodeCave(0x008EC31A, fixDateFormat3, 14); // StringPool 679
-    CodeCave(0x008EBF05, fixDateFormat4, 14); // StringPool 3138
+    // CodeCave(0x008EBF57, fixDateFormat, 14);  // StringPool 5273
+    // CodeCave(0x008EBFA1, fixDateFormat2, 14); // StringPool 655
+    // CodeCave(0x008EC31A, fixDateFormat3, 14); // StringPool 679
+    // CodeCave(0x008EBF05, fixDateFormat4, 14); // StringPool 3138
 
     // 装备类型中文修复
-    CodeCave(0x005CFA99, getItemType1, 15);
-    CodeCave(getItemType2Addr, getItemType2, 27);
+    // CodeCave(0x005CFA99, getItemType1, 15);
+    // CodeCave(getItemType2Addr, getItemType2, 27);
 
    //中文换行乱码
-    CodeCave(0x008F383E, skillToolTipNew, 6);
+    // CodeCave(0x008F383E, skillToolTipNew, 6);
 }
 
