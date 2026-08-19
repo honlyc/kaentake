@@ -176,11 +176,14 @@ void CWvsApp::SetUp_hook() {
     // TSingleton<CInputSystem>::CreateInstance();
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::CreateInstance begin");
     auto pInputSystem = static_cast<CInputSystem*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x9D0));
+    DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem alloc done (ptr=%p)", (void*)pInputSystem);
     if (pInputSystem) {
         // CInputSystem::CInputSystem(pInputSystem);
         reinterpret_cast<void(__thiscall*)(CInputSystem*)>(0x009F821F)(pInputSystem);
     }
+    DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem ctor done");
     // CInputSystem::Init(CInputSystem::GetInstance(), m_hWnd, m_ahInput);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init begin (hWnd=%p, ahInput=%p)", (void*)m_hWnd, (void*)m_ahInput);
     reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem done");
 
