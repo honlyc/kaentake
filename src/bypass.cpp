@@ -205,7 +205,12 @@ void CWvsApp::SetUp_hook() {
 
     // CWvsApp::InitializeGameData(this);
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData begin");
-    reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F8B61)(this);
+    __try {
+        reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F8B61)(this);
+        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData done");
 
     // CWvsApp::CreateWndManager(this);
