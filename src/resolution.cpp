@@ -772,8 +772,12 @@ void AttachResolutionMod() {
     Patch4(0x007FDF30 + 2, 0x5B4); // offsetof(CUIEquip, m_pUIPetEquip)
 
     // Gr2D_DX8.dll
+    DEBUG_MESSAGE("AttachResolutionMod: patching GR2D_DX8.DLL begin");
     CWzGr2D::FindScreenMode = reinterpret_cast<CWzGr2D::FindScreenMode_t>(GetAddressByPattern("GR2D_DX8.DLL", "B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 83 EC 68"));
+    DEBUG_MESSAGE("AttachResolutionMod: FindScreenMode = %p", (void*)CWzGr2D::FindScreenMode);
     CWzGr2D__AdjustCenterY_jmp = reinterpret_cast<uintptr_t>(GetAddressByPattern("GR2D_DX8.DLL", "8D 96 C4 00 00 00"));
+    DEBUG_MESSAGE("AttachResolutionMod: AdjustCenterY_jmp = %08X", CWzGr2D__AdjustCenterY_jmp);
     CWzGr2D__AdjustCenterY_ret = CWzGr2D__AdjustCenterY_jmp + 6;
     PatchJmp(CWzGr2D__AdjustCenterY_jmp, &CWzGr2D__AdjustCenterY_hook);
+    DEBUG_MESSAGE("AttachResolutionMod: GR2D_DX8.DLL done");
 }

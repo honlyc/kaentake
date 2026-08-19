@@ -169,8 +169,12 @@ void CWvsApp::SetUp_hook() {
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7159)(this);
 
     // CWvsApp::InitializeGr2D(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7A3B)(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D done");
+
     // TSingleton<CInputSystem>::CreateInstance();
+    DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::CreateInstance begin");
     auto pInputSystem = static_cast<CInputSystem*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x9D0));
     if (pInputSystem) {
         // CInputSystem::CInputSystem(pInputSystem);
@@ -178,24 +182,43 @@ void CWvsApp::SetUp_hook() {
     }
     // CInputSystem::Init(CInputSystem::GetInstance(), m_hWnd, m_ahInput);
     reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem done");
+
     // CWvsApp::InitializeSound(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F82BC)(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound done");
+
     // CWvsApp::InitializeGameData(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F8B61)(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData done");
+
     // CWvsApp::CreateWndManager(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager begin");
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7034)(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager done");
+
     // CConfig::ApplySysOpt(TSingleton<CConfig>::ms_pInstance, nullptr, nullptr);
+    DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt begin");
     reinterpret_cast<void(__thiscall*)(CConfig*, void*, void*)>(0x0049EA33)(CConfig::GetInstance(), nullptr, nullptr);
+    DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt done");
 
     // TSingleton<CActionMan>::CreateInstance()->Init();
+    DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan begin");
     auto pActionMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9DA6)();
     reinterpret_cast<void(__thiscall*)(void*)>(0x00406ABD)(pActionMan);
     // TSingleton<CAnimationDisplayer>::CreateInstance();
     reinterpret_cast<void*(__cdecl*)()>(0x009F9DFC)();
+    DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan + CAnimationDisplayer done");
+
     // TSingleton<CMapleTVMan>::CreateInstance()->Init()
     auto pMapleTVMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9F87)();
     reinterpret_cast<void(__thiscall*)(void*)>(0x00636F4E)(pMapleTVMan);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan done");
+
     // TSingleton<CQuestMan>::CreateInstance()->LoadDemand();
+    DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan::LoadDemand begin");
     auto pQuestMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9AC2)();
     if (!reinterpret_cast<int(__thiscall*)(void*)>(0x0071D8DF)(pQuestMan)) {
         ErrorMessage("Failed to load quest data.");
@@ -204,15 +227,22 @@ void CWvsApp::SetUp_hook() {
     reinterpret_cast<int(__thiscall*)(void*)>(0x00723341)(pQuestMan);
     // CQuestMan::LoadExclusive(pQuestMan);
     reinterpret_cast<int(__thiscall*)(void*)>(0x007247A1)(pQuestMan);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan done");
+
     // TSingleton<CMonsterBookMan>::CreateInstance()->LoadBook();
+    DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan::LoadBook begin");
     auto pMonsterBookMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9B73)();
     if (!reinterpret_cast<int(__thiscall*)(void*)>(0x0068487C)(pMonsterBookMan)) {
         ErrorMessage("Failed to load monster book data.");
     }
+    DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan done");
+
     // TSingleton<CRadioManager>::CreateInstance();
     reinterpret_cast<void*(__cdecl*)()>(0x009FA078)();
+    DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager done");
 
     // (CLogo*) operator new(0x38); -> (CLogin*) operator new(0x28C);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CLogin create begin");
     CStage* pStage = static_cast<CStage*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x28C));
     if (pStage) {
         // CLogo::CLogo(pStage); -> CLogin::Clogin(pStage);
@@ -220,6 +250,7 @@ void CWvsApp::SetUp_hook() {
     }
     // set_stage(pStage, nullptr);
     reinterpret_cast<void(__cdecl*)(CStage*, void*)>(0x00777347)(pStage, nullptr);
+    DEBUG_MESSAGE("CWvsApp::SetUp: done");
 }
 
 void CWvsApp::CallUpdate_hook(int tCurTime) {
