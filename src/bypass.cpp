@@ -11,9 +11,34 @@
 
 #include <windows.h>
 #include <comdef.h>
+#include <eh.h>
 
 #pragma comment(lib, "winmm.lib")
 #pragma warning(disable : 4996)
+
+// Extract C++ exception info from 0xE06D7363 SEH exception
+static int LogCppExceptionFilter(const char* sContext, LPEXCEPTION_POINTERS pExInfo) {
+    auto pRec = pExInfo->ExceptionRecord;
+    DEBUG_MESSAGE("%s: SEH code=0x%08X addr=%p", sContext, (unsigned int)pRec->ExceptionCode, pRec->ExceptionAddress);
+    if (pRec->ExceptionCode == 0xE06D7363 && pRec->NumberParameters >= 3) {
+        // params: [0]=magic(0x19930520), [1]=object ptr, [2]=throw info ptr
+        DEBUG_MESSAGE("%s: C++ exception, magic=0x%08X obj=%p throwInfo=%p",
+            sContext,
+            (unsigned int)pRec->ExceptionInformation[0],
+            (void*)pRec->ExceptionInformation[1],
+            (void*)pRec->ExceptionInformation[2]);
+        // Try reading _com_error: layout = vtable(4), m_hresult(4), m_perrinfo(4), m_pszMsg(4)
+        auto pObj = reinterpret_cast<const unsigned int*>(pRec->ExceptionInformation[1]);
+        if (pObj && !IsBadReadPtr(pObj, 16)) {
+            HRESULT hr = (HRESULT)pObj[1]; // offset 4 = m_hresult
+            DEBUG_MESSAGE("%s: _com_error HRESULT=0x%08X (%s)", sContext, (unsigned int)hr, _com_error(hr).ErrorMessage());
+        }
+    }
+    return EXCEPTION_EXECUTE_HANDLER;
+}
+
+#define TRY_LOG(ctx) __try
+#define CATCH_LOG(ctx) __except(LogCppExceptionFilter(ctx, GetExceptionInformation()))
 
 
 class ZSocketBase {
@@ -173,10 +198,10 @@ void CWvsApp::SetUp_hook() {
     __try {
         reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7A3B)(this);
         DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("InitializeGr2D", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D done");
+    DEBUG_MESSAGE("CWvsApp::SetUp: post-Gr2D m_hWnd=%p IsWindow=%d", (void*)m_hWnd, m_hWnd ? IsWindow(m_hWnd) : -1);
 
     // TSingleton<CInputSystem>::CreateInstance();
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::CreateInstance begin");
@@ -190,11 +215,24 @@ void CWvsApp::SetUp_hook() {
     // CInputSystem::Init(CInputSystem::GetInstance(), m_hWnd, m_ahInput);
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init begin (hWnd=%p, ahInput=%p)", (void*)m_hWnd, (void*)m_ahInput);
     DEBUG_MESSAGE("CWvsApp::SetUp: ahInput[0]=%p ahInput[1]=%p ahInput[2]=%p", m_ahInput[0], m_ahInput[1], m_ahInput[2]);
+    // test DirectInput8Create
+    {
+        HMODULE hDI = LoadLibraryA("dinput8.dll");
+        if (hDI) {
+            typedef HRESULT(WINAPI* DICreate_t)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
+            auto fnDI = (DICreate_t)GetProcAddress(hDI, "DirectInput8Create");
+            if (fnDI) {
+                IDirectInput8W* pDI = nullptr;
+                HRESULT hrDI = fnDI(GetModuleHandle(nullptr), 0x0800, IID_IDirectInput8W, (LPVOID*)&pDI, nullptr);
+                DEBUG_MESSAGE("CWvsApp::SetUp: DirectInput8Create hr=0x%08X", (unsigned int)hrDI);
+                if (pDI) pDI->Release();
+            }
+        }
+    }
     __try {
         reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
         DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CInputSystem::Init", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem done");
 
@@ -203,8 +241,7 @@ void CWvsApp::SetUp_hook() {
     __try {
         reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F82BC)(this);
         DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("InitializeSound", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound done");
 
@@ -213,8 +250,7 @@ void CWvsApp::SetUp_hook() {
     __try {
         reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F8B61)(this);
         DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("InitializeGameData", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGameData done");
 
@@ -223,8 +259,7 @@ void CWvsApp::SetUp_hook() {
     __try {
         reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7034)(this);
         DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CreateWndManager", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager done");
 
@@ -233,8 +268,7 @@ void CWvsApp::SetUp_hook() {
     __try {
         reinterpret_cast<void(__thiscall*)(CConfig*, void*, void*)>(0x0049EA33)(CConfig::GetInstance(), nullptr, nullptr);
         DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("ApplySysOpt", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt done");
 
@@ -246,8 +280,7 @@ void CWvsApp::SetUp_hook() {
         // TSingleton<CAnimationDisplayer>::CreateInstance();
         reinterpret_cast<void*(__cdecl*)()>(0x009F9DFC)();
         DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan + CAnimationDisplayer returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CActionMan", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan + CAnimationDisplayer done");
 
@@ -257,8 +290,7 @@ void CWvsApp::SetUp_hook() {
         auto pMapleTVMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9F87)();
         reinterpret_cast<void(__thiscall*)(void*)>(0x00636F4E)(pMapleTVMan);
         DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CMapleTVMan", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan done");
 
@@ -274,8 +306,7 @@ void CWvsApp::SetUp_hook() {
         // CQuestMan::LoadExclusive(pQuestMan);
         reinterpret_cast<int(__thiscall*)(void*)>(0x007247A1)(pQuestMan);
         DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CQuestMan", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan done");
 
@@ -287,8 +318,7 @@ void CWvsApp::SetUp_hook() {
             ErrorMessage("Failed to load monster book data.");
         }
         DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CMonsterBookMan", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan done");
 
@@ -297,8 +327,7 @@ void CWvsApp::SetUp_hook() {
     __try {
         reinterpret_cast<void*(__cdecl*)()>(0x009FA078)();
         DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CRadioManager", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager done");
 
@@ -313,8 +342,7 @@ void CWvsApp::SetUp_hook() {
         // set_stage(pStage, nullptr);
         reinterpret_cast<void(__cdecl*)(CStage*, void*)>(0x00777347)(pStage, nullptr);
         DEBUG_MESSAGE("CWvsApp::SetUp: CLogin returned");
-    } __except(EXCEPTION_EXECUTE_HANDLER) {
-        DEBUG_MESSAGE("CWvsApp::SetUp: CLogin EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    } __except(LogCppExceptionFilter("CLogin", GetExceptionInformation())) {
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: done");
 }
