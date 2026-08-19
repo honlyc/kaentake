@@ -24,27 +24,29 @@ static int LogCppExceptionFilter(const char* sContext, LPEXCEPTION_POINTERS pExI
     if (pRec->ExceptionCode == 0xE06D7363 && pRec->NumberParameters >= 3) {
         auto pObj = reinterpret_cast<const unsigned int*>(pRec->ExceptionInformation[1]);
         if (pObj && !IsBadReadPtr(pObj, 16)) {
-            HRESULT hr = (HRESULT)pObj[1]; // offset 4 = m_hresult
+            // _com_error layout: vtable(4) + m_hresult(4) + m_perrinfo(4) + m_pszMsg(4)
+            HRESULT hr = (HRESULT)pObj[1];
             DEBUG_MESSAGE("%s: _com_error HRESULT=0x%08X (%s)", sContext, (unsigned int)hr, _com_error(hr).ErrorMessage());
-        }
-        // Try to get IErrorInfo from thread - contains source, description, help file
-        IErrorInfo* pErrInfo = nullptr;
-        if (SUCCEEDED(GetErrorInfo(0, &pErrInfo)) && pErrInfo) {
-            BSTR bstrSource = nullptr, bstrDesc = nullptr, bstrHelp = nullptr;
-            pErrInfo->GetSource(&bstrSource);
-            pErrInfo->GetDescription(&bstrDesc);
-            pErrInfo->GetHelpFile(&bstrHelp);
-            DEBUG_MESSAGE("%s: IErrorInfo source=%ls desc=%ls help=%ls",
-                sContext,
-                bstrSource ? bstrSource : L"(null)",
-                bstrDesc ? bstrDesc : L"(null)",
-                bstrHelp ? bstrHelp : L"(null)");
-            if (bstrSource) SysFreeString(bstrSource);
-            if (bstrDesc) SysFreeString(bstrDesc);
-            if (bstrHelp) SysFreeString(bstrHelp);
-            pErrInfo->Release();
-        } else {
-            DEBUG_MESSAGE("%s: no IErrorInfo available", sContext);
+            // m_perrinfo at offset 8
+            auto pErrInfo = reinterpret_cast<IErrorInfo*>(const_cast<unsigned int&>(pObj[2]));
+            if (pErrInfo && !IsBadReadPtr(pErrInfo, 4)) {
+                BSTR bstrSource = nullptr, bstrDesc = nullptr;
+                if (SUCCEEDED(pErrInfo->GetSource(&bstrSource)) && bstrSource) {
+                    DEBUG_MESSAGE("%s: IErrorInfo source=%ls", sContext, bstrSource);
+                    SysFreeString(bstrSource);
+                }
+                if (SUCCEEDED(pErrInfo->GetDescription(&bstrDesc)) && bstrDesc) {
+                    DEBUG_MESSAGE("%s: IErrorInfo desc=%ls", sContext, bstrDesc);
+                    SysFreeString(bstrDesc);
+                }
+            }
+            // m_pszMsg at offset 12
+            auto pszMsg = reinterpret_cast<const char*>(const_cast<unsigned int&>(pObj[3]));
+            if (pszMsg && !IsBadReadPtr(pszMsg, 4)) {
+                DEBUG_MESSAGE("%s: _com_error msg=%s", sContext, pszMsg);
+            } else {
+                DEBUG_MESSAGE("%s: _com_error msg=(null)", sContext);
+            }
         }
     }
     return EXCEPTION_EXECUTE_HANDLER;
