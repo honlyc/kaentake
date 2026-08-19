@@ -142,6 +142,9 @@ void CWvsApp::InitializeResMan_hook() {
     }
     std::sort(g_vecOverrides.begin(), g_vecOverrides.end()); // uses operator<
     LOG_DEBUG("InitializeResMan: found %d override entries", (int)g_vecOverrides.size());
+    for (int i = 0; i < (int)g_vecOverrides.size() && i < 20; ++i) {
+        LOG_DEBUG("InitializeResMan: override[%d] = %ls", i, g_vecOverrides[i].GetBSTR());
+    }
 
     // NameSpace.dll - try resolving from g_pCustomNameSpace
     IWzNameSpaceImpl::raw__OnGetLocalObject_orig = static_cast<IWzNameSpaceImpl::raw__OnGetLocalObject_t>(GetAddressByPattern("NAMESPACE.DLL", "B8 ?? ?? ?? ?? E8 ?? ?? ?? ?? 81 EC 80"));

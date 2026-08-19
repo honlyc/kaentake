@@ -178,8 +178,10 @@ void CWvsApp::SetUp_hook() {
 
     // CWvsApp::InitializePCOM(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F6D77)(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializePCOM done (m_bPCOMInitialized=%d)", m_bPCOMInitialized);
     // CWvsApp::CreateMainWindow(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F6D97)(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CreateMainWindow done (m_hWnd=%p)", (void*)m_hWnd);
     // TSingleton<CClientSocket::CreateInstance();
     reinterpret_cast<void(__cdecl*)()>(0x009F9E53)();
     // CWvsApp::ConnectLogin(this);
@@ -192,6 +194,7 @@ void CWvsApp::SetUp_hook() {
     reinterpret_cast<void(__cdecl*)()>(0x009F9EEE)();
     // CWvsApp::InitializeResMan(this);
     reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7159)(this);
+    DEBUG_MESSAGE("CWvsApp::SetUp: InitializeResMan done");
 
     // CWvsApp::InitializeGr2D(this);
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D begin");
