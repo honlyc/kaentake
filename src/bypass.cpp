@@ -222,11 +222,17 @@ void CWvsApp::SetUp_hook() {
             typedef HRESULT(WINAPI* DICreate_t)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
             auto fnDI = (DICreate_t)GetProcAddress(hDI, "DirectInput8Create");
             if (fnDI) {
-                IDirectInput8W* pDI = nullptr;
-                HRESULT hrDI = fnDI(GetModuleHandle(nullptr), 0x0800, IID_IDirectInput8W, (LPVOID*)&pDI, nullptr);
-                DEBUG_MESSAGE("CWvsApp::SetUp: DirectInput8Create hr=0x%08X", (unsigned int)hrDI);
+                // IID_IDirectInput8W = {E54FE380-DC7C-11D2-BA70-00C04F8FFAE6}
+                static const GUID iidDI8W = { 0xE54FE380, 0xDC7C, 0x11D2, { 0xBA, 0x70, 0x00, 0xC0, 0x4F, 0x8F, 0xFA, 0xE6 } };
+                IUnknown* pDI = nullptr;
+                HRESULT hrDI = fnDI(GetModuleHandle(nullptr), 0x0800, iidDI8W, (LPVOID*)&pDI, nullptr);
+                DEBUG_MESSAGE("CWvsApp::SetUp: DirectInput8Create hr=0x%08X pDI=%p", (unsigned int)hrDI, (void*)pDI);
                 if (pDI) pDI->Release();
+            } else {
+                DEBUG_MESSAGE("CWvsApp::SetUp: DirectInput8Create not found in dinput8.dll");
             }
+        } else {
+            DEBUG_MESSAGE("CWvsApp::SetUp: failed to load dinput8.dll err=%d", GetLastError());
         }
     }
     __try {
