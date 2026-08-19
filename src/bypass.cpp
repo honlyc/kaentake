@@ -184,6 +184,7 @@ void CWvsApp::SetUp_hook() {
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem ctor done");
     // CInputSystem::Init(CInputSystem::GetInstance(), m_hWnd, m_ahInput);
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init begin (hWnd=%p, ahInput=%p)", (void*)m_hWnd, (void*)m_ahInput);
+    DEBUG_MESSAGE("CWvsApp::SetUp: ahInput[0]=%p ahInput[1]=%p ahInput[2]=%p", m_ahInput[0], m_ahInput[1], m_ahInput[2]);
     reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem done");
 

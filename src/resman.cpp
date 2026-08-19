@@ -25,7 +25,10 @@ public:
         if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), Ztl_bstr_t(sPath))) {
             return hr;
         }
-        return g_pCustomNameSpace->raw__OnGetLocalObject(nIndex, sPath, pnPathUsed, pvRet);
+        DEBUG_MESSAGE("OnGetLocalObject_hook: fallback to Custom for %ls (hr=0x%08X)", sPath, (unsigned int)hr);
+        HRESULT hr2 = g_pCustomNameSpace->raw__OnGetLocalObject(nIndex, sPath, pnPathUsed, pvRet);
+        DEBUG_MESSAGE("OnGetLocalObject_hook: Custom result hr=0x%08X for %ls", (unsigned int)hr2, sPath);
+        return hr2;
     }
 };
 
@@ -42,7 +45,12 @@ public:
         if (!std::binary_search(g_vecOverrides.begin(), g_vecOverrides.end(), pArchive->absoluteUOL)) {
             return hr;
         }
+        DEBUG_MESSAGE("Serialize_hook: override for %ls", pArchive->absoluteUOL.GetBSTR());
         IWzPropertyPtr pProperty = get_rm()->GetObjectA(L"Custom/" + pArchive->absoluteUOL).GetUnknown();
+        if (!pProperty) {
+            DEBUG_MESSAGE("Serialize_hook: FAILED to get Custom property for %ls", pArchive->absoluteUOL.GetBSTR());
+            return hr;
+        }
         IEnumVARIANTPtr pEnum = pProperty->_NewEnum;
         while (true) {
             Ztl_variant_t vNext;
