@@ -679,6 +679,11 @@ void set_screen_resolution(int nResolution, bool bSave) {
 
 
 void AttachResolutionMod() {
+
+    unsigned char forced_window[] = { 0xb8, 0x00, 0x00, 0x00, 0x00 };
+    PatchMemory((void*)0x009F7A9B, forced_window, sizeof(forced_window));
+    DEBUG_MESSAGE("Forced window");
+
     ATTACH_HOOK(set_stage, set_stage_hook);
     ATTACH_HOOK(CConfig::GetUIWndPos, CConfig::GetUIWndPos_hook);
     ATTACH_HOOK(CConfig::LoadCharacter, CConfig::LoadCharacter_hook);
