@@ -170,7 +170,12 @@ void CWvsApp::SetUp_hook() {
 
     // CWvsApp::InitializeGr2D(this);
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D begin");
-    reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7A3B)(this);
+    __try {
+        reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7A3B)(this);
+        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeGr2D done");
 
     // TSingleton<CInputSystem>::CreateInstance();
@@ -185,7 +190,12 @@ void CWvsApp::SetUp_hook() {
     // CInputSystem::Init(CInputSystem::GetInstance(), m_hWnd, m_ahInput);
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init begin (hWnd=%p, ahInput=%p)", (void*)m_hWnd, (void*)m_ahInput);
     DEBUG_MESSAGE("CWvsApp::SetUp: ahInput[0]=%p ahInput[1]=%p ahInput[2]=%p", m_ahInput[0], m_ahInput[1], m_ahInput[2]);
-    reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
+    __try {
+        reinterpret_cast<void(__thiscall*)(CInputSystem*, HWND, void**)>(0x00599EBF)(pInputSystem, m_hWnd, m_ahInput);
+        DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem::Init EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: CInputSystem done");
 
     // CWvsApp::InitializeSound(this);
