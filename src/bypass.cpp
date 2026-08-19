@@ -200,7 +200,12 @@ void CWvsApp::SetUp_hook() {
 
     // CWvsApp::InitializeSound(this);
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound begin");
-    reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F82BC)(this);
+    __try {
+        reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F82BC)(this);
+        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: InitializeSound done");
 
     // CWvsApp::InitializeGameData(this);
@@ -215,60 +220,102 @@ void CWvsApp::SetUp_hook() {
 
     // CWvsApp::CreateWndManager(this);
     DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager begin");
-    reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7034)(this);
+    __try {
+        reinterpret_cast<void(__thiscall*)(CWvsApp*)>(0x009F7034)(this);
+        DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: CreateWndManager done");
 
     // CConfig::ApplySysOpt(TSingleton<CConfig>::ms_pInstance, nullptr, nullptr);
     DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt begin");
-    reinterpret_cast<void(__thiscall*)(CConfig*, void*, void*)>(0x0049EA33)(CConfig::GetInstance(), nullptr, nullptr);
+    __try {
+        reinterpret_cast<void(__thiscall*)(CConfig*, void*, void*)>(0x0049EA33)(CConfig::GetInstance(), nullptr, nullptr);
+        DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: ApplySysOpt done");
 
     // TSingleton<CActionMan>::CreateInstance()->Init();
     DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan begin");
-    auto pActionMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9DA6)();
-    reinterpret_cast<void(__thiscall*)(void*)>(0x00406ABD)(pActionMan);
-    // TSingleton<CAnimationDisplayer>::CreateInstance();
-    reinterpret_cast<void*(__cdecl*)()>(0x009F9DFC)();
+    __try {
+        auto pActionMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9DA6)();
+        reinterpret_cast<void(__thiscall*)(void*)>(0x00406ABD)(pActionMan);
+        // TSingleton<CAnimationDisplayer>::CreateInstance();
+        reinterpret_cast<void*(__cdecl*)()>(0x009F9DFC)();
+        DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan + CAnimationDisplayer returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: CActionMan + CAnimationDisplayer done");
 
     // TSingleton<CMapleTVMan>::CreateInstance()->Init()
-    auto pMapleTVMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9F87)();
-    reinterpret_cast<void(__thiscall*)(void*)>(0x00636F4E)(pMapleTVMan);
+    DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan begin");
+    __try {
+        auto pMapleTVMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9F87)();
+        reinterpret_cast<void(__thiscall*)(void*)>(0x00636F4E)(pMapleTVMan);
+        DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: CMapleTVMan done");
 
     // TSingleton<CQuestMan>::CreateInstance()->LoadDemand();
     DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan::LoadDemand begin");
-    auto pQuestMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9AC2)();
-    if (!reinterpret_cast<int(__thiscall*)(void*)>(0x0071D8DF)(pQuestMan)) {
-        ErrorMessage("Failed to load quest data.");
+    __try {
+        auto pQuestMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9AC2)();
+        if (!reinterpret_cast<int(__thiscall*)(void*)>(0x0071D8DF)(pQuestMan)) {
+            ErrorMessage("Failed to load quest data.");
+        }
+        // CQuestMan::LoadPartyQuestInfo(pQuestMan);
+        reinterpret_cast<int(__thiscall*)(void*)>(0x00723341)(pQuestMan);
+        // CQuestMan::LoadExclusive(pQuestMan);
+        reinterpret_cast<int(__thiscall*)(void*)>(0x007247A1)(pQuestMan);
+        DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
     }
-    // CQuestMan::LoadPartyQuestInfo(pQuestMan);
-    reinterpret_cast<int(__thiscall*)(void*)>(0x00723341)(pQuestMan);
-    // CQuestMan::LoadExclusive(pQuestMan);
-    reinterpret_cast<int(__thiscall*)(void*)>(0x007247A1)(pQuestMan);
     DEBUG_MESSAGE("CWvsApp::SetUp: CQuestMan done");
 
     // TSingleton<CMonsterBookMan>::CreateInstance()->LoadBook();
     DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan::LoadBook begin");
-    auto pMonsterBookMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9B73)();
-    if (!reinterpret_cast<int(__thiscall*)(void*)>(0x0068487C)(pMonsterBookMan)) {
-        ErrorMessage("Failed to load monster book data.");
+    __try {
+        auto pMonsterBookMan = reinterpret_cast<void*(__cdecl*)()>(0x009F9B73)();
+        if (!reinterpret_cast<int(__thiscall*)(void*)>(0x0068487C)(pMonsterBookMan)) {
+            ErrorMessage("Failed to load monster book data.");
+        }
+        DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
     }
     DEBUG_MESSAGE("CWvsApp::SetUp: CMonsterBookMan done");
 
     // TSingleton<CRadioManager>::CreateInstance();
-    reinterpret_cast<void*(__cdecl*)()>(0x009FA078)();
+    DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager begin");
+    __try {
+        reinterpret_cast<void*(__cdecl*)()>(0x009FA078)();
+        DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
+    }
     DEBUG_MESSAGE("CWvsApp::SetUp: CRadioManager done");
 
     // (CLogo*) operator new(0x38); -> (CLogin*) operator new(0x28C);
     DEBUG_MESSAGE("CWvsApp::SetUp: CLogin create begin");
-    CStage* pStage = static_cast<CStage*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x28C));
-    if (pStage) {
-        // CLogo::CLogo(pStage); -> CLogin::Clogin(pStage);
-        reinterpret_cast<void(__thiscall*)(void*)>(0x005F3C59)(pStage);
+    __try {
+        CStage* pStage = static_cast<CStage*>(ZAllocEx<ZAllocAnonSelector>::s_Alloc(0x28C));
+        if (pStage) {
+            // CLogo::CLogo(pStage); -> CLogin::Clogin(pStage);
+            reinterpret_cast<void(__thiscall*)(void*)>(0x005F3C59)(pStage);
+        }
+        // set_stage(pStage, nullptr);
+        reinterpret_cast<void(__cdecl*)(CStage*, void*)>(0x00777347)(pStage, nullptr);
+        DEBUG_MESSAGE("CWvsApp::SetUp: CLogin returned");
+    } __except(EXCEPTION_EXECUTE_HANDLER) {
+        DEBUG_MESSAGE("CWvsApp::SetUp: CLogin EXCEPTION 0x%08X", (unsigned int)GetExceptionCode());
     }
-    // set_stage(pStage, nullptr);
-    reinterpret_cast<void(__cdecl*)(CStage*, void*)>(0x00777347)(pStage, nullptr);
     DEBUG_MESSAGE("CWvsApp::SetUp: done");
 }
 
