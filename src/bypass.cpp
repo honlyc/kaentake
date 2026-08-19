@@ -12,6 +12,7 @@
 #include <windows.h>
 #include <comdef.h>
 #include <eh.h>
+#include <oleauto.h>
 
 #pragma comment(lib, "winmm.lib")
 #pragma warning(disable : 4996)
@@ -21,17 +22,29 @@ static int LogCppExceptionFilter(const char* sContext, LPEXCEPTION_POINTERS pExI
     auto pRec = pExInfo->ExceptionRecord;
     DEBUG_MESSAGE("%s: SEH code=0x%08X addr=%p", sContext, (unsigned int)pRec->ExceptionCode, pRec->ExceptionAddress);
     if (pRec->ExceptionCode == 0xE06D7363 && pRec->NumberParameters >= 3) {
-        // params: [0]=magic(0x19930520), [1]=object ptr, [2]=throw info ptr
-        DEBUG_MESSAGE("%s: C++ exception, magic=0x%08X obj=%p throwInfo=%p",
-            sContext,
-            (unsigned int)pRec->ExceptionInformation[0],
-            (void*)pRec->ExceptionInformation[1],
-            (void*)pRec->ExceptionInformation[2]);
-        // Try reading _com_error: layout = vtable(4), m_hresult(4), m_perrinfo(4), m_pszMsg(4)
         auto pObj = reinterpret_cast<const unsigned int*>(pRec->ExceptionInformation[1]);
         if (pObj && !IsBadReadPtr(pObj, 16)) {
             HRESULT hr = (HRESULT)pObj[1]; // offset 4 = m_hresult
             DEBUG_MESSAGE("%s: _com_error HRESULT=0x%08X (%s)", sContext, (unsigned int)hr, _com_error(hr).ErrorMessage());
+        }
+        // Try to get IErrorInfo from thread - contains source, description, help file
+        IErrorInfo* pErrInfo = nullptr;
+        if (SUCCEEDED(GetErrorInfo(0, &pErrInfo)) && pErrInfo) {
+            BSTR bstrSource = nullptr, bstrDesc = nullptr, bstrHelp = nullptr;
+            pErrInfo->GetSource(&bstrSource);
+            pErrInfo->GetDescription(&bstrDesc);
+            pErrInfo->GetHelpFile(&bstrHelp);
+            DEBUG_MESSAGE("%s: IErrorInfo source=%ls desc=%ls help=%ls",
+                sContext,
+                bstrSource ? bstrSource : L"(null)",
+                bstrDesc ? bstrDesc : L"(null)",
+                bstrHelp ? bstrHelp : L"(null)");
+            if (bstrSource) SysFreeString(bstrSource);
+            if (bstrDesc) SysFreeString(bstrDesc);
+            if (bstrHelp) SysFreeString(bstrHelp);
+            pErrInfo->Release();
+        } else {
+            DEBUG_MESSAGE("%s: no IErrorInfo available", sContext);
         }
     }
     return EXCEPTION_EXECUTE_HANDLER;
