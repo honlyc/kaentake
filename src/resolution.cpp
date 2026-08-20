@@ -11,6 +11,7 @@
 #include "wvs/ctrlwnd.h"
 #include "FixIme.h"
 #include "FixBuddy.h"
+#include "KeyboardLayoutInit.h"
 #include "wvs/stage.h"
 #include "wvs/field.h"
 #include "wvs/rtti.h"
