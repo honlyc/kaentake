@@ -26,6 +26,106 @@
 #define SCREEN_MESSAGE_WIDTH 400
 
 
+DWORD apDetailBtn_ret = 0x008C4E22;
+
+__declspec(naked) void apDetailBtn() {
+    __asm {
+        push    144h
+        push    99h
+        jmp     apDetailBtn_ret
+    }
+}
+DWORD faceRtn = 0x005C95BF;
+DWORD hairRtn = 0x005C958D;
+DWORD faceHairCaveRtn = 0x005C9505;
+__declspec(naked) void faceHairCave() {
+    __asm {
+		cmp  eax, 2
+		jz label_face
+		cmp  eax, 3
+		jz label_hair
+		cmp  eax, 4
+		jz label_hair
+		cmp  eax, 5
+		jz label_face
+		cmp  eax, 6
+		jz label_hair
+
+		jmp faceHairCaveRtn
+
+		label_face:
+		jmp faceRtn
+
+		label_hair:
+		jmp hairRtn
+    }
+}
+DWORD canSendPkgTimeCaveRtn = 0x00485C32;
+__declspec(naked) void canSendPkgTimeCave() {
+    __asm {
+		sub eax, [esi + 20A8h]
+		cmp eax, 200
+		jmp canSendPkgTimeCaveRtn
+    }
+}
+void SomeFunction() {
+    // 聊天栏选项
+    PatchStr(0x00AF2B28, "对联盟     ");
+    // 有效期字体大小
+    Patch1(0x008E55ED + 1, 0x0B);
+    // 属性位置字体大小
+    Patch1(0x008E557A + 1, 0x0B);
+    Patch1(0x008E565E + 1, 0x0B);
+
+    // 玩家名片 职业字体大小和位置
+    Patch1(0x0090142E + 1, 0x5E); //  60->5E 位置上移
+    Patch1(0x00901400 + 1, 1);    //  字体type改为1 对应12号大小
+    // 面板关闭按钮x
+    Patch4(0x008C485A + 1, 192);
+    // 面板宽度
+    Patch4(0x008C4AB3 + 1, 210);
+
+    // 详情面板宽度x
+    Patch4(0x008C510A + 1, 218);
+
+    // 详情面板初始x
+    Patch4(0x008C4EA2 + 1, 205);
+
+    // 详情面板切换x
+    Patch4(0x008C5760 + 1, 205);
+
+    // 加属性按钮x
+    Patch4(0x008C7AD9 + 1, 185);
+
+    // 详情面板关闭按钮x
+    Patch4(0x008C2754 + 1, 195);
+
+    // 移动时详情面板x
+    Patch4(0x008C6C72 + 1, 205);
+    // 详情按钮
+    CodeCave(0x008C4E1B, apDetailBtn, 7);
+
+    Patch4(0x0045A5BE + 1, 9999); // 喇叭
+    // 直接内存写入
+    Patch4(0x009A3D81, 480);
+
+    // 装备属性页面的职业需求偏移
+    Patch1(0x008EC4A7 + 1, 0x23); // 战士
+    Patch1(0x008EC53C + 1, 0x4D); // 魔法师
+    Patch1(0x008EC5D1 + 1, 0x7A); // 弓箭手
+    Patch1(0x008EC660 + 1, 0xA9); // 飞侠
+    Patch1(0x008EC6CF + 1, 0xC8); // 海盗
+
+    // CodeCave调用（地址和函数交换位置）
+    CodeCave(0x005C94F3, faceHairCave, 18);
+    CodeCave(0x00485C28, canSendPkgTimeCave, 10);
+
+    // 重复说话功能
+    Patch1(0x004905ED + 1, 5);
+    Patch4(0x0049064B + 2, 2000);
+}
+
+
 static ZRef<CCtrlComboBox> g_cbResolution;
 static int g_nResolution = 0;
 static int g_nScreenWidth = 800;
@@ -682,6 +782,7 @@ void set_screen_resolution(int nResolution, bool bSave) {
 
 
 void AttachResolutionMod() {
+    SomeFunction();
     ClientConfig::Init();
     FixIme::HookNew();
     FixBuddy::Hook();
