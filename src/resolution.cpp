@@ -682,9 +682,9 @@ void set_screen_resolution(int nResolution, bool bSave) {
 
 
 void AttachResolutionMod() {
-    // ClientConfig::Init();
-    // FixIme::HookNew();
-    // FixBuddy::Hook();
+    ClientConfig::Init();
+    FixIme::HookNew();
+    FixBuddy::Hook();
     
     ATTACH_HOOK(set_stage, set_stage_hook);
     ATTACH_HOOK(CConfig::GetUIWndPos, CConfig::GetUIWndPos_hook);
