@@ -72,51 +72,79 @@ public:
 
 void CWvsApp::InitializeResMan_hook() {
     LOG_DEBUG("InitializeResMan: begin");
-    CWvsApp::InitializeResMan(this);
+    // can change/move this variable to whatever you wish
+    bool bUseFileSystem = true;
+ 
+    // basic data mounting
+    char sStartPath[MAX_PATH];
+    GetModuleFileNameA(nullptr, sStartPath, MAX_PATH);
+    Dir_BackSlashToSlash(sStartPath);
+    Dir_upDir(sStartPath);
+    if (bUseFileSystem) {
+        // IMG format referred to kinoko_client/src/resman.cpp
+        IWzResManPtr& rm = get_rm();
+        PcCreateObject<IWzResManPtr>(L"ResMan", rm, nullptr);
+        rm->SetResManParam(static_cast<RESMAN_PARAM>(RESMAN_PARAM::RC_AUTO_REPARSE | RESMAN_PARAM::RC_AUTO_SERIALIZE), -1, -1);
+        IWzNameSpacePtr& root = get_root();
+        PcCreateObject<IWzNameSpacePtr>(L"NameSpace", root, nullptr);
+        PcSetRootNameSpace(root);
+        IWzFileSystemPtr fs;
+        PcCreateObject<IWzFileSystemPtr>(L"NameSpace#FileSystem", fs, nullptr);
+        char sDataPath[MAX_PATH];
+        sprintf_s(sDataPath, "%s/Data", sStartPath);
+        fs->Init(Ztl_bstr_t(sDataPath));
+        root->Mount(L"/", fs, 0);
+    } else {
+        // WZ format just call the original function
+        CWvsApp::InitializeResMan(this);
+        // planned to copy codes in kinoko_client/src/resman.cpp as above and just rewrite the whole function instead of doing this
+        // not necessary but still calling teto god for assistance on this part T^T
+        // get_sub() function address of v83 is 9F7A2F and the constant in there is 0xBF14A4
+    }
     LOG_DEBUG("InitializeResMan: original InitializeResMan done");
-
-// add custom namespace to root
+    
+    // add custom namespace to root
     IWzWritableNameSpacePtr pWritableRoot;
     if (FAILED(get_root()->QueryInterface(&pWritableRoot))) {
         ErrorMessage("Failed to cast root namespace");
         return;
     }
-    LOG_DEBUG("InitializeResMan: got writable root namespace");
-
     IWzNameSpacePtr pNameSpace;
     PcCreateObject<IWzNameSpacePtr>(L"NameSpace", pNameSpace, nullptr);
     Ztl_variant_t vResult;
     pWritableRoot->AddObject(L"Custom", static_cast<IUnknown*>(pNameSpace), &vResult);
     g_pCustomNameSpace = vResult.GetUnknown();
-    LOG_DEBUG("InitializeResMan: Custom namespace added to root (ptr=%p)", (void*)g_pCustomNameSpace.GetInterfacePtr());
-
-    // load Custom.wz from file system
-    IWzFileSystemPtr fs;
-    PcCreateObject<IWzFileSystemPtr>(L"NameSpace#FileSystem", fs, nullptr);
-    char sStartPath[MAX_PATH];
-    GetModuleFileNameA(nullptr, sStartPath, MAX_PATH);
-    Dir_BackSlashToSlash(sStartPath);
-    Dir_upDir(sStartPath);
-    strcat_s(sStartPath, MAX_PATH, "/Custom");
-    LOG_DEBUG("InitializeResMan: FileSystem path = %s", sStartPath);
-    fs->Init(Ztl_bstr_t(sStartPath));
-    LOG_DEBUG("InitializeResMan: FileSystem initialized");
-
-    // IWzPackagePtr pPackage;
-    // PcCreateObject<IWzPackagePtr>(L"NameSpace#Package", pPackage, nullptr);
-    // IWzSeekableArchivePtr pArchive = fs->item[L"Custom.wz"].GetUnknown();
-    // pPackage->Init(L"83", L"Custom", pArchive);
-    g_pCustomNameSpace->Mount(L"/", fs, 0);
-    LOG_DEBUG("InitializeResMan: FileSystem mounted to Custom namespace");
-
+ 
+    if (bUseFileSystem) {
+        // IMG format mounting Data/Custom directory, with IWzFileSystem
+        IWzFileSystemPtr fsCustom;
+        PcCreateObject<IWzFileSystemPtr>(L"NameSpace#FileSystem", fsCustom, nullptr);
+        char sCustomPath[MAX_PATH];
+        sprintf_s(sCustomPath, "%s/Data/Custom", sStartPath);
+        fsCustom->Init(Ztl_bstr_t(sCustomPath));
+        g_pCustomNameSpace->Mount(L"/", fsCustom, 1);
+    } else {
+        // WZ format mounting Custom.wz, with IWzPackage and IWzSeekableArchive
+        IWzFileSystemPtr fs;
+        PcCreateObject<IWzFileSystemPtr>(L"NameSpace#FileSystem", fs, nullptr);
+        fs->Init(sStartPath);
+ 
+        IWzPackagePtr pPackage;
+        PcCreateObject<IWzPackagePtr>(L"NameSpace#Package", pPackage, nullptr);
+        IWzSeekableArchivePtr pArchive = fs->item[L"Custom.wz"].GetUnknown();
+        if (pArchive) {
+            pPackage->Init(L"83", L"Custom", pArchive);
+            g_pCustomNameSpace->Mount(L"/", pPackage, 1);
+        }
+    }
+ 
     // iterate custom namespace
     std::vector<std::tuple<Ztl_bstr_t, IEnumVARIANTPtr>> stack;
     stack.emplace_back(L"", g_pCustomNameSpace->_NewEnum);
-    LOG_DEBUG("InitializeResMan: iterating custom namespace");
     while (!stack.empty()) {
         auto [sPath, pEnum] = stack.back();
         stack.pop_back();
-
+ 
         while (true) {
             Ztl_variant_t vNext;
             ULONG uCeltFetched;
@@ -139,11 +167,7 @@ void CWvsApp::InitializeResMan_hook() {
             }
             g_vecOverrides.push_back(sUOL);
         }
-    }
-    std::sort(g_vecOverrides.begin(), g_vecOverrides.end()); // uses operator<
-    LOG_DEBUG("InitializeResMan: found %d override entries", (int)g_vecOverrides.size());
-    for (int i = 0; i < (int)g_vecOverrides.size() && i < 20; ++i) {
-        LOG_DEBUG("InitializeResMan: override[%d] = %ls", i, g_vecOverrides[i].GetBSTR());
+        std::sort(g_vecOverrides.begin(), g_vecOverrides.end());
     }
 
     // NameSpace.dll - try resolving from g_pCustomNameSpace
