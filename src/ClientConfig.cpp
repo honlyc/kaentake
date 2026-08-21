@@ -28,7 +28,7 @@ int ClientConfig::serverIP_Port = 8484;
 bool ClientConfig::talkRepeat = false;
 int ClientConfig::talkTime = 2000;
 
-// 补丁分组开关（从 config.ini [client] 读取，1=启用 0=禁用）
+// 补丁分组开关（�? config.ini [client] 读取�?1=启用 0=禁用�?
 static bool g_EnableManifestAdmin = true;
 static bool g_EnableServerIP = true;
 static bool g_EnableCaps = true;
@@ -53,7 +53,7 @@ static int GetInt(const char* key, int defVal) {
 }
 
 void ClientConfig::Init() {
-    // 读取功能开关
+    // 读取功能开�?
     g_EnableManifestAdmin = GetBool("patch_manifest", true);
     g_EnableServerIP      = GetBool("patch_server_ip", true);
     g_EnableCaps          = GetBool("patch_caps", true);
@@ -150,6 +150,7 @@ void ClientConfig::ApplyPatches() {
     PatchNop(0x009A4482, 0x009A4484);
 
     PatchNop(0x008E4252, 0x008E4254);
+    PatchNop(0x008AD21F, 5);	//�Ƴ�һת���ܵ㲻����
 
     Patch1(0x0068DE1F + 1, 0x86);
     Patch1(0x0068DFBD + 1, 0x86);
