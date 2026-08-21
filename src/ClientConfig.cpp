@@ -150,7 +150,7 @@ void ClientConfig::ApplyPatches() {
     PatchNop(0x009A4482, 0x009A4484);
 
     PatchNop(0x008E4252, 0x008E4254);
-    PatchNop(0x008AD21F, 5);	//移除一转技能点不足检测
+    PatchNop(0x008AD21F, 0x008AD224);	//移除一转技能点不足检测
 
     Patch1(0x0068DE1F + 1, 0x86);
     Patch1(0x0068DFBD + 1, 0x86);
