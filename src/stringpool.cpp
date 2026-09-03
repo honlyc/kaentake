@@ -76,6 +76,28 @@ static inline void rtrim(std::string &s) {
 }
 static inline void trim(std::string &s) { ltrim(s); rtrim(s); }
 
+// Process C-style escape sequences in a string read from file.
+// Supports: \n \r \t \\ \0
+static std::string UnescapeString(const std::string& s) {
+    std::string result;
+    result.reserve(s.size());
+    for (size_t i = 0; i < s.size(); ++i) {
+        if (s[i] == '\\' && i + 1 < s.size()) {
+            switch (s[i + 1]) {
+                case 'n':  result += '\n'; ++i; break;
+                case 'r':  result += '\r'; ++i; break;
+                case 't':  result += '\t'; ++i; break;
+                case '\\': result += '\\'; ++i; break;
+                case '0':  result += '\0'; ++i; break;
+                default:   result += s[i]; break;
+            }
+        } else {
+            result += s[i];
+        }
+    }
+    return result;
+}
+
 // Simple translations loader. Format: each non-comment line is "index=translation"
 // File must be saved as UTF-8. If the client expects another encoding, add conversion here.
 static void LoadTranslationsFromFile(const char* path) {
@@ -105,7 +127,8 @@ static void LoadTranslationsFromFile(const char* path) {
         if (key.empty()) continue;
         try {
             int idx = std::stoi(key);
-            ReplaceStringRuntime(idx, val);
+            std::string unescaped = UnescapeString(val);
+            ReplaceStringRuntime(idx, unescaped);
         } catch (...) {
             LOG_DEBUG("LoadTranslationsFromFile: invalid key on line %u: %s", lineNo, key.c_str());
             continue;
