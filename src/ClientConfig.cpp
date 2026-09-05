@@ -35,6 +35,7 @@ static bool g_EnableCaps = true;
 static bool g_EnableSkillTweaks = true;
 static bool g_EnableWindowLogos = true;
 static bool g_EnableClimbSpeed = true;
+static bool g_EnableAssassinateTweaks = true;
 
 static bool GetBool(const char* key, bool defVal) {
     char sBuffer[32];
@@ -60,6 +61,7 @@ void ClientConfig::Init() {
     g_EnableSkillTweaks   = GetBool("patch_skill_tweaks", true);
     g_EnableWindowLogos   = GetBool("patch_window_logos", true);
     g_EnableClimbSpeed    = GetBool("patch_climb_speed", true);
+    g_EnableAssassinateTweaks = GetBool("patch_assassinate_tweaks", true);
 
     // 璇诲彇鍔熻兘鍙傛暟
     WindowedMode     = GetBool("windowed_mode", true);
@@ -180,5 +182,27 @@ void ClientConfig::ApplyPatches() {
     *(double*)climbSpeedBytes = climbSpeed * 3.0f;
     PatchMemory((void*)0x00C1CF80, climbSpeedBytes, 8);
     }
+    if (g_EnableAssassinateTweaks) {
+    LOG_DEBUG("ApplyPatches: stage 6 (assassinate tweaks)");
+
+    // 移除暗杀技能的隐身术(Dark Sight)前置要求
+    Patch1(0x0096953E, 0xEB);
+
+    // 禁用暗杀最后一击的冲刺位移
+    Patch1(0x00952D9B, 0xEB);
+
+    // 禁用隐身术状态下暗杀的额外伤害加成 (CalcDamage::PDamage)
+    unsigned char jumpPatch[] = { 0xE9, 0xEE, 0x00, 0x00, 0x00, 0x90 };
+    PatchMemory((void*)0x0078EDCE, jumpPatch, sizeof(jumpPatch));
+    Patch1(0x00790107, 0xEB);
+    Patch1(0x00790296, 0xEB);
+
+    // 允许在空中使用暗杀技能
+    FillBytes(0x00950B42, 0x90, 6);
+
+    // 移除暗杀时的"隐身术"视觉特效 (12 = 无效技能ID，不显示效果)
+    Patch4(0x00951A32 + 1, 12);
+    }
+
     LOG_DEBUG("ApplyPatches: done");
 }
