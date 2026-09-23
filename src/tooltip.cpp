@@ -29,6 +29,62 @@ public:
 };
 
 
+// ==================== 潜能显示（模拟数据） ====================
+// TODO: 数据通路（封包死字段 / 旁路同步封包）确定后，用真实数据源替换 GetMockPotential
+
+struct PotentialOptionInfo {
+    int nOptionID;
+    const char* sDesc;
+};
+
+const PotentialOptionInfo g_aPotentialOptionTable[] = {
+    { 30001, "力量 : +6%" },
+    { 30002, "敏捷 : +6%" },
+    { 30003, "智力 : +6%" },
+    { 30004, "运气 : +6%" },
+    { 30005, "攻击力 : +12" },
+    { 30006, "魔法攻击力 : +12" },
+    { 30007, "MaxHP : +240" },
+    { 30008, "MaxMP : +240" },
+    { 30009, "物理防御力 : +6%" },
+    { 30010, "魔法防御力 : +6%" },
+};
+const int g_nPotentialOptionCount = sizeof(g_aPotentialOptionTable) / sizeof(g_aPotentialOptionTable[0]);
+
+const char* GetPotentialGradeName(int nGrade) {
+    switch (nGrade) {
+    case 1: return "稀有";
+    case 2: return "史诗";
+    case 3: return "传说";
+    }
+    return "";
+}
+
+const char* GetPotentialOptionDesc(int nOptionID) {
+    for (int i = 0; i < g_nPotentialOptionCount; i++) {
+        if (g_aPotentialOptionTable[i].nOptionID == nOptionID) {
+            return g_aPotentialOptionTable[i].sDesc;
+        }
+    }
+    return "";
+}
+
+// 模拟潜能数据：按 itemID 确定性生成，保证同一件装备每次悬停显示一致
+// nGrade: 0 = 无潜能，1 = 稀有，2 = 史诗，3 = 传说
+void GetMockPotential(int nItemID, int& nGrade, int anOption[3]) {
+    nGrade = 0;
+    anOption[0] = anOption[1] = anOption[2] = 0;
+    if (nItemID % 5 == 0) {
+        return; // 一部分装备无潜能，用于验证无潜能时不渲染
+    }
+    unsigned int uSeed = static_cast<unsigned int>(nItemID) * 2654435761u;
+    nGrade = static_cast<int>(uSeed % 3) + 1;
+    int nBase = static_cast<int>((uSeed >> 8) % g_nPotentialOptionCount);
+    for (int i = 0; i < 3; i++) {
+        anOption[i] = g_aPotentialOptionTable[(nBase + i * 3) % g_nPotentialOptionCount].nOptionID;
+    }
+}
+
 void CUIToolTip::SetToolTip_Equip_Basic_hook(GW_ItemSlotEquip* pe) {
     int nItemID = pe->nItemID;
     auto pEquipItem = CItemInfo::GetInstance()->GetEquipItem(nItemID);
@@ -81,6 +137,20 @@ void CUIToolTip::SetToolTip_Equip_Basic_hook(GW_ItemSlotEquip* pe) {
     }
     if (pEquipItem->nRUC) {
         PrintValue(PT_VALUE, pe->nRUC, "装备可升级次数 :", 1);
+    }
+
+    // 潜能显示：分隔线 + 潜能等级 + 3 条潜能属性
+    int nPotentialGrade;
+    int anPotentialOption[3];
+    GetMockPotential(nItemID, nPotentialGrade, anPotentialOption);
+    if (nPotentialGrade > 0) {
+        AddInfoEx(14, 15, "--------------------------------", "", 1, 1001);
+        AddInfoEx(14, 15, "潜能等级 :", GetPotentialGradeName(nPotentialGrade), 1, 1001);
+        for (int i = 0; i < 3; i++) {
+            if (anPotentialOption[i]) {
+                AddInfoEx(14, 15, GetPotentialOptionDesc(anPotentialOption[i]), "", 1, 1001);
+            }
+        }
     }
 }
 
