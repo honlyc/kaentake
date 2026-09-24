@@ -90,14 +90,13 @@ void GetMockPotential(int nItemID, int& nGrade, int anOption[3]) {
 static auto CUIToolTip__DrawToolTip_Equip =
     reinterpret_cast<void(__thiscall*)(CUIToolTip*, int, GW_ItemSlotEquip*)>(0x008ED0D2);
 
-// 分隔线 Y 坐标校准常量（像素）：如线位置与潜能块不贴合，微调这三个值
+// 分隔线 Y 坐标校准常量（像素）：如线位置与潜能块不贴合，微调这两个值
 constexpr int kToolTipRowHeight = 13;      // AddInfoEx 单行高度
-constexpr int kToolTipBottomPadding = 5;   // tooltip 底部留白
-constexpr int kPotentialLineGap = 4;       // 分隔线与潜能块之间的间距
+constexpr int kPotentialLineGap = 2;       // 分隔线与潜能块之间的间距
 
 // 由 SetToolTip_Equip_Basic_hook 记录，DrawToolTip_Equip_hook 读取
 static int g_nPotentialPendingItemID = 0;
-static int g_nPotentialRowCount = 0;
+static int g_nPotentialLineY = 0;
 
 void CUIToolTip::SetToolTip_Equip_Basic_hook(GW_ItemSlotEquip* pe) {
     int nItemID = pe->nItemID;
@@ -158,16 +157,18 @@ void CUIToolTip::SetToolTip_Equip_Basic_hook(GW_ItemSlotEquip* pe) {
     int anPotentialOption[3];
     GetMockPotential(nItemID, nPotentialGrade, anPotentialOption);
     g_nPotentialPendingItemID = 0;
-    g_nPotentialRowCount = 0;
     if (nPotentialGrade > 0) {
+        int nRowCount = 1;
         AddInfoEx(14, 15, "潜能等级 :", GetPotentialGradeName(nPotentialGrade), 1, 1001);
-        g_nPotentialRowCount = 1;
         for (int i = 0; i < 3; i++) {
             if (anPotentialOption[i]) {
                 AddInfoEx(14, 15, GetPotentialOptionDesc(anPotentialOption[i]), "", 1, 1001);
-                g_nPotentialRowCount++;
+                nRowCount++;
             }
         }
+        // 此刻 m_nHeight 正好是潜能块底部（本函数返回后追加的金锤子/描述行都在其下方），
+        // 在此捕获分隔线 Y，与尾部还会追加多少行无关
+        g_nPotentialLineY = m_nHeight - kToolTipRowHeight * nRowCount - kPotentialLineGap;
         g_nPotentialPendingItemID = nItemID;
     }
 }
@@ -304,7 +305,7 @@ __declspec(naked) void skillToolTipNew() {
 // 在原生绘制完成后，于潜能块上方画一条像素级分隔线（白线，左右各留 6px）
 void __fastcall CUIToolTip__DrawToolTip_Equip_hook(CUIToolTip* pThis, void* _EDX, int a2, GW_ItemSlotEquip* pe) {
     CUIToolTip__DrawToolTip_Equip(pThis, a2, pe);
-    if (!pe || !pThis->m_pLayer || g_nPotentialRowCount <= 0) {
+    if (!pe || !pThis->m_pLayer) {
         return;
     }
     int nItemID = pe->nItemID;
@@ -315,9 +316,8 @@ void __fastcall CUIToolTip__DrawToolTip_Equip_hook(CUIToolTip* pThis, void* _EDX
     if (!pCanvas) {
         return;
     }
-    // 潜能块是 tooltip 最底部的若干行，从 m_nHeight 反推分隔线的 Y
-    int nLineY = pThis->m_nHeight - kToolTipBottomPadding - kToolTipRowHeight * g_nPotentialRowCount - kPotentialLineGap;
-    pCanvas->DrawRectangle(6, nLineY, pThis->m_nWidth - 12, 1, 0xFFFFFFFF);
+    // 使用 Set 阶段捕获的 Y：潜能块之后引擎还会追加金锤子/描述等行，不能从 m_nHeight 底部反推
+    pCanvas->DrawRectangle(6, g_nPotentialLineY, pThis->m_nWidth - 12, 1, 0xFFFFFFFF);
 }
 
 void AttachToolTipMod() {
