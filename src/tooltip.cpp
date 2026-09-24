@@ -85,6 +85,20 @@ void GetMockPotential(int nItemID, int& nGrade, int anOption[3]) {
     }
 }
 
+// ==================== 潜能分隔线（Draw 阶段像素级绘制） ====================
+// CUIToolTip::DrawToolTip_Equip 地址来自 SetEquipV3，已确认与 kaentake 同一客户端 build
+static auto CUIToolTip__DrawToolTip_Equip =
+    reinterpret_cast<void(__thiscall*)(CUIToolTip*, int, GW_ItemSlotEquip*)>(0x008ED0D2);
+
+// 分隔线 Y 坐标校准常量（像素）：如线位置与潜能块不贴合，微调这三个值
+constexpr int kToolTipRowHeight = 13;      // AddInfoEx 单行高度
+constexpr int kToolTipBottomPadding = 5;   // tooltip 底部留白
+constexpr int kPotentialLineGap = 4;       // 分隔线与潜能块之间的间距
+
+// 由 SetToolTip_Equip_Basic_hook 记录，DrawToolTip_Equip_hook 读取
+static int g_nPotentialPendingItemID = 0;
+static int g_nPotentialRowCount = 0;
+
 void CUIToolTip::SetToolTip_Equip_Basic_hook(GW_ItemSlotEquip* pe) {
     int nItemID = pe->nItemID;
     auto pEquipItem = CItemInfo::GetInstance()->GetEquipItem(nItemID);
@@ -139,18 +153,22 @@ void CUIToolTip::SetToolTip_Equip_Basic_hook(GW_ItemSlotEquip* pe) {
         PrintValue(PT_VALUE, pe->nRUC, "装备可升级次数 :", 1);
     }
 
-    // 潜能显示：分隔线 + 潜能等级 + 3 条潜能属性
+    // 潜能显示：潜能等级 + 3 条潜能属性；分隔线由 DrawToolTip_Equip_hook 像素级绘制
     int nPotentialGrade;
     int anPotentialOption[3];
     GetMockPotential(nItemID, nPotentialGrade, anPotentialOption);
+    g_nPotentialPendingItemID = 0;
+    g_nPotentialRowCount = 0;
     if (nPotentialGrade > 0) {
-        AddInfoEx(14, 15, "--------------------------------", "", 1, 1001);
         AddInfoEx(14, 15, "潜能等级 :", GetPotentialGradeName(nPotentialGrade), 1, 1001);
+        g_nPotentialRowCount = 1;
         for (int i = 0; i < 3; i++) {
             if (anPotentialOption[i]) {
                 AddInfoEx(14, 15, GetPotentialOptionDesc(anPotentialOption[i]), "", 1, 1001);
+                g_nPotentialRowCount++;
             }
         }
+        g_nPotentialPendingItemID = nItemID;
     }
 }
 
@@ -283,8 +301,28 @@ __declspec(naked) void skillToolTipNew() {
                 jmp skillToolTipNewRtn
     }
 }
+// 在原生绘制完成后，于潜能块上方画一条像素级分隔线（白线，左右各留 6px）
+void __fastcall CUIToolTip__DrawToolTip_Equip_hook(CUIToolTip* pThis, void* _EDX, int a2, GW_ItemSlotEquip* pe) {
+    CUIToolTip__DrawToolTip_Equip(pThis, a2, pe);
+    if (!pe || !pThis->m_pLayer || g_nPotentialRowCount <= 0) {
+        return;
+    }
+    int nItemID = pe->nItemID;
+    if (nItemID != g_nPotentialPendingItemID) {
+        return;
+    }
+    IWzCanvasPtr pCanvas = pThis->m_pLayer->canvas[0];
+    if (!pCanvas) {
+        return;
+    }
+    // 潜能块是 tooltip 最底部的若干行，从 m_nHeight 反推分隔线的 Y
+    int nLineY = pThis->m_nHeight - kToolTipBottomPadding - kToolTipRowHeight * g_nPotentialRowCount - kPotentialLineGap;
+    pCanvas->DrawRectangle(6, nLineY, pThis->m_nWidth - 12, 1, 0xFFFFFFFF);
+}
+
 void AttachToolTipMod() {
     ATTACH_HOOK(CUIToolTip::SetToolTip_Equip_Basic, CUIToolTip::SetToolTip_Equip_Basic_hook);
+    ATTACH_HOOK(CUIToolTip__DrawToolTip_Equip, CUIToolTip__DrawToolTip_Equip_hook);
     // 装备有效期限日期格式修复
     CodeCave(0x008EBF57, fixDateFormat, 14);  // StringPool 5273
     CodeCave(0x008EBFA1, fixDateFormat2, 14); // StringPool 655
